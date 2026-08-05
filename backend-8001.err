@@ -1,0 +1,4 @@
+[03/Jul/2026 23:42:57] "POST /api/auth/login HTTP/1.1" 500 145
+[03/Jul/2026 23:42:57,773] - Broken pipe from ('127.0.0.1', 56707)
+[03/Jul/2026 23:43:13] "POST /api/auth/login HTTP/1.1" 500 145
+[03/Jul/2026 23:43:23] "POST /api/auth/login HTTP/1.1" 500 145

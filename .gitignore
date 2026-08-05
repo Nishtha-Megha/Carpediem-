@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.sqlite3
+.env
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Editors
+.DS_Store
+.idea/
+.vscode/
