@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 import { SkeletonPanel } from "../../../components/ui/SkeletonPanel";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { api, getApiErrorMessage } from "../../../api";
 
 export function DashboardSection({
   analytics,
@@ -19,6 +21,34 @@ export function DashboardSection({
   onRefresh,
   onNavigate
 }) {
+  const [banner, setBanner] = useState({
+    title: "Carpedium Sports 2026",
+    event_dates: "Aug 20 - Aug 30, 2026",
+    venue: "LJ University Campus",
+    registration_deadline: "15 Aug 2026"
+  });
+  const [editingBanner, setEditingBanner] = useState(false);
+  const [savingBanner, setSavingBanner] = useState(false);
+
+  useEffect(() => {
+    api.get("/dashboard-banner").then((res) => {
+      if (res.data?.data) setBanner((current) => ({ ...current, ...res.data.data }));
+    }).catch(() => {});
+  }, []);
+
+  const saveBanner = async () => {
+    setSavingBanner(true);
+    try {
+      const res = await api.put("/dashboard-banner", banner);
+      setBanner((current) => ({ ...current, ...(res.data?.data || {}) }));
+      setEditingBanner(false);
+    } catch (error) {
+      window.alert(getApiErrorMessage(error));
+    } finally {
+      setSavingBanner(false);
+    }
+  };
+
   if (analyticsLoading) {
     return (
       <section className="grid gap-5">
@@ -77,23 +107,49 @@ export function DashboardSection({
               Active Event
             </span>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight mt-1" style={{ color: "var(--text-primary)" }}>
-              Carpedium Sports 2026
+              {banner.title}
             </h1>
             <p className="mt-2 text-sm font-semibold flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+              <span>Event Dates: {banner.event_dates}</span>
+              <span className="hidden sm:inline">·</span>
+              <span>{banner.venue}</span>
+            </p>
+            <p className="hidden">
               <span>📅 Event Dates: Aug 20 - Aug 30, 2026</span>
               <span className="hidden sm:inline">·</span>
               <span>📍 LJ University Campus</span>
             </p>
             <p className="mt-1.5 text-xs text-rose-400 font-bold flex items-center gap-1.5">
+              <span>Registration Deadline: {banner.registration_deadline}</span>
+            </p>
+            <p className="hidden">
               <span>⚠️ Registration Deadline: 15 Aug 2026</span>
             </p>
           </div>
           <div className="flex gap-3 shrink-0">
+            <button className="btn btn-secondary rounded-2xl text-xs py-3 px-5 font-bold" onClick={() => setEditingBanner((value) => !value)}>
+              {editingBanner ? "Close Editor" : "Edit Banner"}
+            </button>
             <button className="btn btn-primary rounded-2xl text-xs py-3 px-5 font-bold shadow-md bg-gradient-to-r from-green-500 to-indigo-500 border-none text-white hover:opacity-90" onClick={() => onNavigate("events")}>
               Manage Events
             </button>
           </div>
         </div>
+        {editingBanner && (
+          <div className="relative z-10 mt-6 grid gap-3 rounded-2xl border border-white/[0.08] bg-black/10 p-4 md:grid-cols-2">
+            {[['title', 'Banner Title'], ['event_dates', 'Event Dates'], ['venue', 'Venue'], ['registration_deadline', 'Registration Deadline']].map(([key, label]) => (
+              <label key={key} className="grid gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+                {label}
+                <input className="input text-sm" value={banner[key]} onChange={(event) => setBanner((current) => ({ ...current, [key]: event.target.value }))} />
+              </label>
+            ))}
+            <div className="md:col-span-2 flex justify-end">
+              <button className="btn btn-primary text-sm font-bold" onClick={saveBanner} disabled={savingBanner}>
+                {savingBanner ? "Saving…" : "Save Banner"}
+              </button>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* ══ Stats Cards Grid ═══════════════════════════════════════════════ */}

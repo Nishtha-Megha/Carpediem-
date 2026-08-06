@@ -47,6 +47,16 @@ class User(Document):
     meta = {"collection": "users", "indexes": ["email", "role"]}
 
 
+class DashboardBanner(Document):
+    title = StringField(default="Carpedium Sports 2026")
+    event_dates = StringField(default="Oct 12 - Oct 18, 2026")
+    venue = StringField(default="LJ University Grounds")
+    registration_deadline = StringField(default="Oct 05, 2026 (23:59)")
+    updated_at = DateTimeField(default=now)
+
+    meta = {"collection": "dashboardBanner"}
+
+
 class Event(Document):
     name = StringField(db_field="title", required=True, max_length=180)
     description = StringField(required=True)

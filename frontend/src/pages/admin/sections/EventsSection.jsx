@@ -23,6 +23,7 @@ import { SkeletonCards } from "../../../components/ui/SkeletonPanel";
 import { Pagination } from "../../../components/ui/Pagination";
 import { EventStatusBadge } from "../../../components/ui/Badge";
 import { PageHeader } from "../../../components/ui/PageHeader";
+import { formatEventDateTime, splitEventTime, toMeridiemTime } from "../../../utils/eventDateTime";
 const PER_PAGE = 12;
 const BLANK_FORM = {
   name: "",
@@ -30,10 +31,11 @@ const BLANK_FORM = {
   banner_image: "",
   date: "",
   time: "",
+  time_period: "AM",
   venue: "",
   registration_deadline: "",
   event_type: "individual",
-  category: "",
+  category: "Both",
   coordinator: "",
   team_size: 1,
   registration_fee: 0,
@@ -122,6 +124,7 @@ const matchQ =
     : "",
 
   time: convertTo24Hour(event?.time || ""),
+  time_period: splitEventTime(event?.time).period,
 
   banner_image: event?.banner_image || "",
 });
@@ -158,17 +161,23 @@ const matchQ =
       toast.error("Venue is required");
       return;
     }
+    if (!form.category?.trim()) {
+      toast.error("Category is required");
+      return;
+    }
     if (!form.banner_image) {
-  toast.error("Banner image is required");
-  return;
-}
+      toast.error("Banner image is required");
+      return;
+    }
     setSaving(true);
     try {
+      const { time_period, ...eventData } = form;
+      eventData.time = toMeridiemTime(form.time, time_period);
       if (mode === "create") {
-        await api.post("/events", form);
+        await api.post("/events", eventData);
         toast.success("Event created");
       } else {
-        await api.put(`/events/${selected.id}`, form);
+        await api.put(`/events/${selected.id}`, eventData);
         toast.success("Event updated");
       }
       setForm(null);
@@ -238,7 +247,7 @@ const matchQ =
     /* Filters */
   }
       <div className="glass grid gap-3 rounded-[1.5rem] p-4 md:grid-cols-2 lg:grid-cols-4 border border-white/[0.03] dark:border-white/[0.05] shadow-sm">
-        <input className="input text-sm" placeholder="Search events…" value={search} onChange={(e) => {
+        <input className="search-input input text-sm" placeholder="Search events…" value={search} onChange={(e) => {
     setSearch(e.target.value);
     setPage(1);
   }} />
@@ -311,7 +320,7 @@ const matchQ =
                   <div className="mt-4 pt-4 border-t border-white/[0.04] grid gap-2 text-xs font-semibold text-slate-400">
                     <div className="flex items-center gap-2">
                       <CalendarDays size={14} className="text-slate-500" />
-                      <span>{event.date} at {event.time}</span>
+                      <span>{formatEventDateTime(event.date, event.time)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin size={14} className="text-slate-500" />
@@ -396,12 +405,16 @@ const matchQ =
 /></div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Category</label>
-<input
-  className="input text-sm font-medium mt-0.5"
-  value={form.category ?? ""}
-  onChange={(e) => updateField("category", e.target.value)}
-  placeholder="Technical / Cultural"
-/>            </div>
+              <select
+                className="input text-sm font-medium mt-0.5"
+                value={form.category ?? "Both"}
+                onChange={(e) => updateField("category", e.target.value)}
+              >
+                <option value="Boys">Boys</option>
+                <option value="Girls">Girls</option>
+                <option value="Both">Both</option>
+              </select>
+            </div>
             <div className="space-y-1.5 sm:col-span-2">
 <textarea
   className="input text-sm font-medium mt-0.5 min-h-24 resize-y"
@@ -476,6 +489,13 @@ const matchQ =
   onChange={(e) => updateField("time", e.target.value)}
 />            </div>
             <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>AM / PM</label>
+              <select className="input text-sm font-medium mt-0.5" value={form.time_period ?? "AM"} onChange={(e) => updateField("time_period", e.target.value)}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Registration Deadline</label>
 <input
   className="input text-sm font-medium mt-0.5"
@@ -511,42 +531,6 @@ const matchQ =
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Team Size</label>
-<input
-  type="number"
-  value={form.team_size ?? 1}
-  onChange={(e) =>
-    updateField("team_size", Number(e.target.value))
-  }
-/>            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Max Teams</label>
-<input
-  type="number"
-  value={form.maximum_teams ?? 0}
-  onChange={(e) =>
-    updateField("maximum_teams", Number(e.target.value))
-  }
-/>            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Max Seats</label>
-<input
-  type="number"
-  value={form.maximum_seats ?? 0}
-  onChange={(e) =>
-    updateField("maximum_seats", Number(e.target.value))
-  }
-/>            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Available Seats</label>
-<input
-  type="number"
-  value={form.available_seats ?? 0}
-  onChange={(e) =>
-    updateField("available_seats", Number(e.target.value))
-  }
-/>            </div>
-            <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Status</label>
 <select
   className="input text-sm font-medium mt-0.5"
@@ -557,6 +541,46 @@ const matchQ =
                 <option value="completed">Completed</option>
               </select>
             </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Team Size</label>
+<input
+  type="number"
+  className="input text-sm font-medium mt-0.5"
+  value={form.team_size ?? 1}
+  onChange={(e) =>
+    updateField("team_size", Number(e.target.value))
+  }
+/>            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Max Teams</label>
+<input
+  type="number"
+  className="input text-sm font-medium mt-0.5"
+  value={form.maximum_teams ?? 0}
+  onChange={(e) =>
+    updateField("maximum_teams", Number(e.target.value))
+  }
+/>            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Max Seats</label>
+<input
+  type="number"
+  className="input text-sm font-medium mt-0.5"
+  value={form.maximum_seats ?? 0}
+  onChange={(e) =>
+    updateField("maximum_seats", Number(e.target.value))
+  }
+/>            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Available Seats</label>
+<input
+  type="number"
+  className="input text-sm font-medium mt-0.5"
+  value={form.available_seats ?? 0}
+  onChange={(e) =>
+    updateField("available_seats", Number(e.target.value))
+  }
+/>            </div>
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Rules</label>
 <textarea

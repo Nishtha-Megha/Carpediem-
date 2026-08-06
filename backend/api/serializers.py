@@ -253,6 +253,9 @@ def registration_to_dict(registration):
     return {
         "id": serialize_id(registration.id),
         "user": user_data,
+        # Keep the captain's gender explicit for Team Finder. This also lets
+        # the frontend handle older/admin registration payloads consistently.
+        "team_gender": (user_data or {}).get("gender"),
         "event": event_data,
         "registration_type": registration.registration_type,
         "enrollment_number": registration.enrollment_number,

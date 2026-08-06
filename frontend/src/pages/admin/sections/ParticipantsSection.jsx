@@ -117,7 +117,7 @@ export function ParticipantsSection({ participants, events, loading, canManage, 
               placeholder="Search student or team name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-4 pr-4 py-2 test-base w-full rounded-lg"
+              className="search-input input pl-4 pr-4 py-2 text-base w-full rounded-lg"
               style={{ background: "var(--bg-card)" }}
             />
           </div>

@@ -84,7 +84,7 @@ export function GlobalSearch({
         <Search size={15} />
         <input
     ref={inputRef}
-    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+    className="search-input w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
     style={{ color: "var(--text-primary)" }}
     value={value}
     onChange={(e) => {

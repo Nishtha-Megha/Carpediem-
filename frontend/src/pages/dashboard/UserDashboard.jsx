@@ -56,17 +56,45 @@ const normalizePhone = (value) => {
     : digits.slice(0, 10);
 };
 
+const formatEventDate = (value) => {
+  if (!value) return "Not set";
+  const rawValue = String(value);
+  const datePart = rawValue.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  const date = new Date(datePart ? `${datePart}T00:00:00` : rawValue);
+  if (Number.isNaN(date.getTime())) return rawValue;
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const eventDateKey = (value) => String(value || "").slice(0, 10);
+const eventTimeKey = (value) => String(value || "").trim().toLowerCase();
+
 export default function UserDashboard() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
 
+  const userGender = String(user?.gender || "").trim().toLowerCase();
+  const isGenderSelected = userGender === "male" || userGender === "female";
+  const isSameGenderTeam = (team) =>
+    isGenderSelected &&
+    String(team?.team_gender || team?.user?.gender || "").trim().toLowerCase() === userGender;
+  const isOwnTeam = (team) =>
+    String(team?.user?.id || "") === String(user?.id || "") ||
+    String(team?.enrollment_number || "").trim() === String(user?.enrollment_number || "").trim();
+  const isAcceptedTeamMember = (team) =>
+    !isOwnTeam(team) && team?.team_members?.some(
+      (member) => String(member.enrollment_number || "").trim() === String(user?.enrollment_number || "").trim() && member.invite_status === "accepted"
+    );
   const isProfileComplete = !!(
     String(user?.enrollment_number || "").trim() &&
     user?.branch?.trim() &&
     user?.phone?.trim() &&
     user?.location?.trim() &&
-    user?.gender?.trim()
+    isGenderSelected
   );
 
   // Navigation & view states
@@ -76,9 +104,16 @@ export default function UserDashboard() {
 
   // Notification bell dropdown state
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [notificationView, setNotificationView] = useState("all");
 
   // Data states
   const [events, setEvents] = useState([]);
+  const [dashboardBanner, setDashboardBanner] = useState({
+    title: "Carpedium Sports 2026",
+    event_dates: "Oct 12 - Oct 18, 2026",
+    venue: "LJ University Grounds",
+    registration_deadline: "Oct 05, 2026 (23:59)"
+  });
   const [eventsLoading, setEventsLoading] = useState(true);
   const [myRegistrations, setMyRegistrations] = useState([]);
   const [allRegistrations, setAllRegistrations] = useState([]); // Used for Team Finder listings
@@ -86,6 +121,7 @@ export default function UserDashboard() {
   const [students, setStudents] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [highlightedTeamId, setHighlightedTeamId] = useState("");
   const [error, setError] = useState(null);
 
   // Search & filter states
@@ -216,6 +252,9 @@ export default function UserDashboard() {
   loadRegistrations();
   loadStudents();
   loadNotifications();
+  api.get("/dashboard-banner").then((res) => {
+    if (res.data?.data) setDashboardBanner((current) => ({ ...current, ...res.data.data }));
+  }).catch(() => {});
 }, [
   loadEvents,
   loadRegistrations,
@@ -223,23 +262,61 @@ export default function UserDashboard() {
   loadNotifications
 ]);
 
+  useEffect(() => {
+    const gender = String(user?.gender || "").trim().toLowerCase();
+    if (!user || gender === "male" || gender === "female") return;
+
+    const promptKey = `gender-prompt-${user.id || user.email}`;
+    if (!sessionStorage.getItem(promptKey)) {
+      toast.error("Please kindly select your gender in your profile before continuing.");
+      sessionStorage.setItem(promptKey, "shown");
+    }
+  }, [user]);
+
   // Derived: only admin-broadcast announcements (entity="announcement")
   const allAnnouncements = notifications.filter((n) => n.entity === "announcement");
   const unreadAnnouncements = allAnnouncements.filter((n) => !n.is_read);
+  const teamNotifications = notifications.filter((n) => {
+    const title = String(n.title || "").toLowerCase();
+    return n.entity === "registration" && (
+      title.includes("join request") ||
+      title.includes("teammate left")
+    );
+  });
+  const unreadTeamNotifications = teamNotifications.filter((n) => !n.is_read);
+  const appNotifications = [...allAnnouncements, ...teamNotifications];
+  const unreadAppNotifications = appNotifications.filter((n) => !n.is_read);
+  const visibleNotifications = notificationView === "team"
+    ? teamNotifications
+    : notificationView === "announcements"
+      ? allAnnouncements
+      : appNotifications;
+  const unreadVisibleNotifications = visibleNotifications.filter((n) => !n.is_read);
 
   // Dismiss a single notification
   const dismissNotification = async (id) => {
     try {
-      await api.post(`/notifications/${id}/read`);
-      loadNotifications();
+      await api.delete(`/notifications/${id}`);
+      setNotifications((current) => current.filter((notification) => notification.id !== id));
     } catch (_) { }
+  };
+
+  const openTeamNotification = (notification) => {
+    setActiveTab("my-teams");
+    setHighlightedTeamId(String(notification.entity_id || ""));
+    dismissNotification(notification.id);
+    window.setTimeout(() => {
+      document.getElementById(`team-card-${notification.entity_id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+    window.setTimeout(() => setHighlightedTeamId(""), 2500);
   };
 
   // Dismiss all announcements
   const dismissAllAnnouncements = async () => {
     try {
-      await api.post("/notifications/actions/read-all");
-      loadNotifications();
+      const unread = allAnnouncements.filter((notification) => !notification.is_read);
+      await Promise.all(unread.map((notification) => api.delete(`/notifications/${notification.id}`)));
+      setNotifications((current) => current.filter((notification) => !unread.some((item) => item.id === notification.id)));
       toast.success("All announcements marked as read.");
     } catch (e) {
       toast.error(getApiErrorMessage(e));
@@ -247,14 +324,25 @@ export default function UserDashboard() {
   };
 
   // Filter lists
+  const activeMyRegistrations = myRegistrations.filter(
+    (r) => !["rejected", "cancelled"].includes(String(r.status || "").toLowerCase())
+  );
+
   const myRegisteredIds = new Set(
-    myRegistrations
-      .filter((r) => r.status === "registered")
+    activeMyRegistrations
       .map((r) => r.event?.id)
       .filter(Boolean)
   );
 
+  const scheduleConflictIds = new Set(
+    activeMyRegistrations
+      .filter((r) => r.event)
+      .map((r) => `${eventDateKey(r.event.date)}|${eventTimeKey(r.event.time)}`)
+  );
+
   const filteredEvents = events.filter((event) => {
+    if (!isGenderSelected) return false;
+
     const nameMatch = event.name?.toLowerCase().includes(searchValue.toLowerCase());
     const descMatch = event.description?.toLowerCase().includes(searchValue.toLowerCase());
     const matchSearch = nameMatch || descMatch;
@@ -266,13 +354,11 @@ export default function UserDashboard() {
     } else if (user?.gender === "female") {
       isGenderEligible = event.category === "Girls" || event.category === "Both";
     } else {
-      // Default / Other: show open events
       isGenderEligible = event.category === "Both";
     }
 
     if (!isGenderEligible) return false;
 
-    // Map "Both" choice to "Open"
     const matchCategory =
       categoryFilter === "all" ||
       (categoryFilter === "Both" && event.category === "Both") ||
@@ -291,7 +377,7 @@ export default function UserDashboard() {
       const copy = [...form.team_members];
       copy[index] = student
         ? {
-          name: student.full_name,
+          name: student.full_name || student.name || "Unnamed player",
           email: student.email,
           enrollment_number: String(student.enrollment_number || "").trim(),
           branch: student.branch || "General",
@@ -477,6 +563,17 @@ if (!/^\d{14}$/.test(enrollment)) {
     }
   };
 
+  const handleLeaveAsTeammate = async (regId) => {
+    if (!window.confirm("Remove yourself from this team?")) return;
+    try {
+      await api.post(`/registrations/${regId}/leave-team`);
+      toast.success("You have been removed from the team.");
+      loadRegistrations();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
   // Team Finder: captain action on join request
   const handleCaptainAction = async (regId, studentEnrollment, action) => {
     try {
@@ -603,7 +700,8 @@ if (!/^\d{14}$/.test(enrollment)) {
       r.event?.id === detailsEvent?.id &&
       r.registration_type === "team" &&
       r.looking_for_players &&
-      r.status === "registered" &&
+      isSameGenderTeam(r) &&
+      !["rejected", "cancelled", "waitlisted"].includes(String(r.status || "").toLowerCase()) &&
       1 + (r.team_members?.filter(m => m.invite_status !== "rejected").length || 0) < (r.event?.team_size || 1)
   );
 
@@ -612,7 +710,7 @@ if (!/^\d{14}$/.test(enrollment)) {
 
       {/* ══ NAVBAR ════════════════════════════════════════════════════════════ */}
       <nav className="glass sticky top-0 z-40 mb-8 border-b border-white/[0.04]" style={{ background: "var(--bg-surface)", backdropFilter: "blur(12px)" }}>
-        <div className="mx-auto max-w-7xl px-5 h-16 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-5 h-16 flex items-center justify-between relative">
           <div className="flex items-center gap-8">
             {/* Logo */}
             <div className="flex items-center gap-2">
@@ -624,12 +722,11 @@ if (!/^\d{14}$/.test(enrollment)) {
               </span>
             </div>
             {/* Nav Tabs */}
-            <div className="hidden sm:flex items-center justify-between gap-1">
+            <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 items-center justify-between gap-1">
               {[
                 { id: "home", label: "Home" },
                 { id: "sports", label: "Sports" },
                 { id: "my-teams", label: "My Teams" },
-                { id: "profile", label: "Profile" }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -639,7 +736,14 @@ if (!/^\d{14}$/.test(enrollment)) {
                       : "text-slate-400 bg-transparent border-transparent hover:bg-white/[0.04] hover:text-slate-200"
                     }`}
                 >
-                  {tab.label}
+                  <span className="inline-flex items-center gap-1.5">
+                    {tab.label}
+                    {tab.id === "my-teams" && unreadTeamNotifications.length > 0 && (
+                      <span className="min-w-4 h-4 px-1 flex items-center justify-center rounded-full bg-rose-500 text-[9px] font-black text-white">
+                        {unreadTeamNotifications.length > 9 ? "9+" : unreadTeamNotifications.length}
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
@@ -657,9 +761,9 @@ if (!/^\d{14}$/.test(enrollment)) {
                 title="Announcements"
               >
                 <Bell size={17} />
-                {unreadAnnouncements.length > 0 && (
+                {unreadAppNotifications.length > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-indigo-500 text-[9px] font-black text-white shadow-md border border-indigo-400/40">
-                    {unreadAnnouncements.length > 9 ? "9+" : unreadAnnouncements.length}
+                    {unreadAppNotifications.length > 9 ? "9+" : unreadAppNotifications.length}
                   </span>
                 )}
               </button>
@@ -682,32 +786,43 @@ if (!/^\d{14}$/.test(enrollment)) {
                       <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
                         <div className="flex items-center gap-2">
                           <Megaphone size={14} className="text-indigo-400" />
-                          <span className="text-xs font-extrabold uppercase tracking-widest" style={{ color: "var(--text-primary)" }}>Announcements</span>
-                          {unreadAnnouncements.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {[['all', 'All'], ['announcements', 'Announcements'], ['team', 'Team']].map(([view, label]) => (
+                              <button key={view} onClick={() => setNotificationView(view)} className={`px-2 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-wider ${notificationView === view ? "bg-indigo-500/20 text-indigo-300" : "text-slate-500 hover:text-slate-300"}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          {unreadVisibleNotifications.length > 0 && (
                             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[9px] font-black border border-indigo-500/25">
-                              {unreadAnnouncements.length} new
+                              {unreadVisibleNotifications.length} new
                             </span>
                           )}
                         </div>
-                        {unreadAnnouncements.length > 0 && (
+                        {unreadVisibleNotifications.length > 0 && (
                           <button
-                            onClick={() => { dismissAllAnnouncements(); }}
+                            onClick={() => {
+                              const unread = [...unreadVisibleNotifications];
+                              Promise.all(unread.map((notification) => api.delete(`/notifications/${notification.id}`))).then(() => {
+                                setNotifications((current) => current.filter((notification) => !unread.some((item) => item.id === notification.id)));
+                              });
+                            }}
                             className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 transition-colors"
                           >
-                            Mark all read
+                            Clear unread
                           </button>
                         )}
                       </div>
 
                       {/* Announcements list */}
                       <div className="max-h-80 overflow-y-auto divide-y divide-white/[0.03]">
-                        {allAnnouncements.length === 0 ? (
+                        {visibleNotifications.length === 0 ? (
                           <div className="py-10 flex flex-col items-center gap-2 text-center">
                             <Bell size={24} className="text-slate-600" />
-                            <p className="text-xs text-slate-500 font-semibold">No announcements yet</p>
+                            <p className="text-xs text-slate-500 font-semibold">No notifications yet</p>
                           </div>
                         ) : (
-                          allAnnouncements.map((ann, idx) => (
+                          visibleNotifications.map((ann, idx) => (
                             <div
                               key={ann.id}
                               className={`flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.025] ${!ann.is_read ? "bg-indigo-500/[0.04]" : ""
@@ -722,11 +837,10 @@ if (!/^\d{14}$/.test(enrollment)) {
                                 )}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <p className={`text-xs font-bold leading-snug ${ann.is_read ? "text-slate-400" : "text-slate-100"
-                                  }`}>{ann.title}</p>
-                                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed line-clamp-3">{ann.message}</p>
+                                <p className="text-xs font-bold leading-snug" style={{ color: ann.is_read ? "var(--text-secondary)" : "var(--text-primary)" }}>{ann.title}</p>
+                                <p className="text-[11px] mt-1 leading-relaxed line-clamp-3" style={{ color: "var(--text-secondary)" }}>{ann.message}</p>
                                 {ann.created_at && (
-                                  <p className="text-[10px] text-slate-700 font-semibold mt-1">
+                                  <p className="text-[10px] font-semibold mt-1" style={{ color: "var(--text-muted)" }}>
                                     {new Date(ann.created_at).toLocaleString()}
                                   </p>
                                 )}
@@ -842,7 +956,7 @@ if (!/^\d{14}$/.test(enrollment)) {
             <div className="flex sm:hidden gap-1 mb-6 overflow-x-auto pb-1">
               {[
                 { id: "home", label: "Home" },
-                { id: "sports", label: "Sports" },
+                { id: "sports", label: "All" },
                 { id: "my-teams", label: "My Teams" },
                 { id: "profile", label: "Profile" }
               ].map((tab) => (
@@ -850,11 +964,17 @@ if (!/^\d{14}$/.test(enrollment)) {
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setSearchValue(""); }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${activeTab === tab.id
-                      ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
-                      : "text-slate-400 bg-white/[0.02] border-white/[0.04] hover:bg-white/[0.04]"
+                  ? "bg-[linear-gradient(135deg,#14b8a6,#3b82f6)] text-white border-blue-500 shadow-md"                      : "text-slate-400 bg-white/[0.02] border-white/[0.04] hover:bg-white/[0.04]"
                     }`}
                 >
-                  {tab.label}
+                  <span className="inline-flex items-center gap-1.5">
+                    {tab.label}
+                    {tab.id === "my-teams" && unreadTeamNotifications.length > 0 && (
+                      <span className="min-w-4 h-4 px-1 flex items-center justify-center rounded-full bg-rose-500 text-[9px] font-black text-white">
+                        {unreadTeamNotifications.length > 9 ? "9+" : unreadTeamNotifications.length}
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
@@ -881,14 +1001,22 @@ if (!/^\d{14}$/.test(enrollment)) {
                         Active Event Banner
                       </span>
                       <h1 className="text-3xl sm:text-4xl font-black tracking-tight mt-1" style={{ color: "var(--text-primary)" }}>
-                        Carpedium Sports 2026
+                        {dashboardBanner.title}
                       </h1>
                       <p className="mt-2 text-sm font-semibold flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                        <span>Event Dates: {dashboardBanner.event_dates}</span>
+                        <span className="hidden sm:inline">·</span>
+                        <span>{dashboardBanner.venue}</span>
+                      </p>
+                      <p className="hidden">
                         <span>📅 Event Dates: Oct 12 - Oct 18, 2026</span>
                         <span className="hidden sm:inline">·</span>
                         <span>📍 LJ University Grounds</span>
                       </p>
                       <p className="mt-1.5 text-xs text-rose-400 font-bold flex items-center gap-1.5">
+                        <span>Registration Deadline: {dashboardBanner.registration_deadline}</span>
+                      </p>
+                      <p className="hidden">
                         <span>⚠️ Registration Deadline: Oct 05, 2026 (23:59)</span>
                       </p>
                     </div>
@@ -928,19 +1056,20 @@ if (!/^\d{14}$/.test(enrollment)) {
                     <Users size={16} className="text-indigo-400" /> Teams Looking for Players
                   </h2>
 
-                  {allRegistrations.filter(r => r.looking_for_players && 1 + (r.team_members?.filter(m => m.invite_status !== "rejected").length || 0) < (r.event?.team_size || 1)).length === 0 ? (
+                  {allRegistrations.filter(r => isSameGenderTeam(r) && r.looking_for_players && !["rejected", "cancelled", "waitlisted"].includes(String(r.status || "").toLowerCase()) && 1 + (r.team_members?.filter(m => m.invite_status !== "rejected").length || 0) < (r.event?.team_size || 1)).length === 0 ? (
                     <p className="text-xs text-slate-500 p-8 text-center bg-white/[0.01] rounded-2xl border border-dashed border-white/[0.03]">
                       No teams are currently recruiting players.
                     </p>
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {allRegistrations
-                        .filter(r => r.looking_for_players && 1 + (r.team_members?.filter(m => m.invite_status !== "rejected").length || 0) < (r.event?.team_size || 1))
+                        .filter(r => isSameGenderTeam(r) && r.looking_for_players && !["rejected", "cancelled", "waitlisted"].includes(String(r.status || "").toLowerCase()) && 1 + (r.team_members?.filter(m => m.invite_status !== "rejected").length || 0) < (r.event?.team_size || 1))
                         .map((team, idx) => {
                           const activePlayers = 1 + (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0);
                           const totalSlots = team.event?.team_size || 1;
                           const captainName = team.user?.full_name || "Captain";
                           const hasRequested = team.join_requests?.includes(user?.enrollment_number);
+                          const isAcceptedMember = isAcceptedTeamMember(team);
                           const captainInitials = captainName
                             .split(" ")
                             .map((n) => n[0])
@@ -974,7 +1103,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                                   </div>
                                   <div className="min-w-0">
                                     <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider leading-none">Captain</p>
-                                    <p className="text-xs font-bold text-slate-300 truncate mt-0.5">{captainName}</p>
+                                    <p className="text-xs font-bold text-slate-300 truncate mt-0.5">{isOwnTeam(team) ? "You" : captainName}</p>
                                   </div>
                                 </div>
 
@@ -993,21 +1122,25 @@ if (!/^\d{14}$/.test(enrollment)) {
                                 </div>
                               </div>
 
-                              <button
-                                className="w-full btn btn-primary text-xs py-2 px-4 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                                onClick={() => handleRequestJoinTeam(team.id)}
-                                disabled={hasRequested}
-                              >
-                                {hasRequested ? (
-                                  <>
-                                    <UserCheck size={14} className="text-emerald-400" /> Requested
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserPlus size={14} /> Request to Join
-                                  </>
-                                )}
-                              </button>
+                              {isOwnTeam(team) ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  <button className="btn btn-secondary text-xs py-2 rounded-xl font-bold" onClick={() => setActiveTab("my-teams")}>View</button>
+                                  <button className="btn btn-secondary text-xs py-2 rounded-xl font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => leaveTeam(team.id)}>Remove</button>
+                                </div>
+                              ) : isAcceptedMember ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  <button className="btn btn-secondary text-xs py-2 rounded-xl font-bold" onClick={() => setActiveTab("my-teams")}>View Team</button>
+                                  <button className="btn btn-secondary text-xs py-2 rounded-xl font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => handleLeaveAsTeammate(team.id)}>Remove as Teammate</button>
+                                </div>
+                              ) : (
+                                <button
+                                  className="w-full btn btn-primary text-xs py-2 px-4 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                                  onClick={() => handleRequestJoinTeam(team.id)}
+                                  disabled={hasRequested}
+                                >
+                                  {hasRequested ? <><UserCheck size={14} className="text-emerald-400" /> Requested</> : <><UserPlus size={14} /> Request to Join</>}
+                                </button>
+                              )}
                             </motion.div>
                           );
                         })}
@@ -1030,7 +1163,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                       placeholder="Search sports events..."
                       value={searchValue}
                       onChange={(e) => setSearchValue(e.target.value)}
-                      className="input px-4 py-2 text-sm w-full rounded-xl"
+                      className="search-input input px-4 py-2 text-sm w-full rounded-xl"
                       style={{ background: "var(--bg-card)" }}
                     />
                   </div>
@@ -1041,17 +1174,27 @@ if (!/^\d{14}$/.test(enrollment)) {
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {[1, 2, 3].map((i) => <SkeletonPanel key={i} className="h-64" />)}
                   </div>
+                ) : !isGenderSelected ? (
+                  <EmptyState
+                    title="Complete your profile"
+                    message="Please select your gender in profile settings to view eligible sports events."
+                    icon={User}
+                    action={<button className="btn-primary text-sm py-2 px-4" onClick={handleOpenProfileModal}>Complete Profile</button>}
+                  />
                 ) : filteredEvents.length === 0 ? (
                   <EmptyState title="No sports found" message="No matches found for your search filters." icon={CalendarDays} />
                 ) : (
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {filteredEvents.map((event, i) => {
                       const isRegistered = myRegisteredIds.has(event.id);
+                      const hasScheduleConflict = !isRegistered && scheduleConflictIds.has(
+                        `${eventDateKey(event.date)}|${eventTimeKey(event.time)}`
+                      );
                       const isFull = event.available_seats <= 0;
                       return (
                         <motion.article
                           key={event.id}
-                          className="glass-premium overflow-hidden rounded-[1.75rem] border border-white/[0.03]"
+                          className="glass-premium overflow-hidden rounded-[1.75rem] border border-white/[0.06] shadow-lg shadow-black/10"
                           initial={{ opacity: 0, y: 16 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.04 }}
@@ -1068,35 +1211,41 @@ if (!/^\d{14}$/.test(enrollment)) {
                             />
                           </div>
 
-                          <div className="p-5 flex flex-col justify-between h-64">
+                          <div className="p-6 flex flex-col justify-between min-h-[28rem]">
                             <div>
-                              <h3 className="text-lg font-bold truncate" style={{ color: "var(--text-primary)" }}>{event.name}</h3>
+                              <h3 className="text-xl font-extrabold truncate" style={{ color: "var(--text-primary)" }}>{event.name}</h3>
 
-                              <div className="mt-3.5 space-y-1.5 text-xs" style={{ color: "var(--text-secondary)" }}>
-                                <p className="font-semibold text-slate-400">Category: <span className="text-indigo-400">{event.category}</span></p>
-                                <p className="font-semibold text-slate-400">Team Size: <span className="text-cyan-400">{event.team_size || 1}</span></p>
-                                <p className="font-semibold text-slate-400 truncate">Venue: <span className="text-slate-300">{event.venue}</span></p>
+                              <div className="mt-5 space-y-2.5 text-sm" style={{ color: "var(--text-secondary)" }}>
+                                <p className="font-semibold text-slate-400">Category: <span className="font-bold text-indigo-400">{event.category}</span></p>
+                                <p className="font-semibold text-slate-400">Team Size: <span className="font-bold text-cyan-400">{event.team_size || 1}</span></p>
+                                <p className="font-semibold text-slate-400">Game Date: <span className="font-bold text-slate-200">{formatEventDate(event.date)}</span></p>
+                                <p className="font-semibold text-slate-400">Start Time: <span className="font-bold text-slate-200">{event.time || "Time to be announced"}</span></p>
+                                <p className="font-semibold text-slate-400 truncate">Venue: <span className="font-bold text-slate-200">{event.venue}</span></p>
                               </div>
 
-                              <div className="mt-4 pt-3 border-t border-white/[0.04] grid grid-cols-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                              <div className="mt-5 pt-4 border-t border-white/[0.06] grid grid-cols-2 text-xs" style={{ color: "var(--text-muted)" }}>
                                 <span>Slots Left: <strong className={isFull ? "text-rose-400" : "text-emerald-400"}>{event.available_seats}</strong></span>
-                                <span className="text-right">Deadline: <strong className="text-slate-300">{event.registration_deadline || event.date}</strong></span>
+                                <span className="text-right">Deadline: <strong className="text-slate-300">{formatEventDate(event.registration_deadline || event.date)}</strong></span>
                               </div>
                             </div>
 
                             {/* Action buttons */}
                             <div className="mt-auto grid grid-cols-2 gap-3 pt-3">
-                              <button className="btn-secondary text-xs py-2 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold" onClick={() => setDetailsEvent(event)}>
+                              <button className="btn-secondary text-sm py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold" onClick={() => setDetailsEvent(event)}>
                                 View Details
                               </button>
                               {isRegistered ? (
                                 <span className="badge badge-success text-xs font-bold py-2 rounded-xl flex items-center justify-center">✓ Registered</span>
+                              ) : hasScheduleConflict ? (
+                                <span className="badge text-amber-400 bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold py-2 rounded-xl flex items-center justify-center text-center">
+                                  Schedule Conflict
+                                </span>
                               ) : isFull ? (
-                                <button className="btn-secondary text-xs py-2 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold text-amber-400 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10" onClick={() => openRegister(event)}>
+                                <button className="btn-secondary text-sm py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold text-amber-400 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10" onClick={() => openRegister(event)}>
                                   Join Waitlist
                                 </button>
                               ) : (
-                                <button className="btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold shadow-sm" onClick={() => openRegister(event)}>
+                                <button className="btn-primary text-sm py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold shadow-sm" onClick={() => openRegister(event)}>
                                   Register
                                 </button>
                               )}
@@ -1113,6 +1262,54 @@ if (!/^\d{14}$/.test(enrollment)) {
             {/* ══ TAB 3: MY TEAMS / REGISTRATIONS ═══════════════════════════════ */}
             {activeTab === "my-teams" && (
               <div className="grid gap-6">
+
+                {teamNotifications.length > 0 && (
+                  <div className="glass rounded-[1.75rem] p-5 border border-indigo-500/15" style={{ background: "var(--bg-surface)" }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-base font-extrabold tracking-tight flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+                        <Bell size={16} className="text-indigo-400" /> Team Notifications
+                        {unreadTeamNotifications.length > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black">
+                            {unreadTeamNotifications.length} new
+                          </span>
+                        )}
+                      </h2>
+                      {unreadTeamNotifications.length > 0 && (
+                        <button
+                          className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300"
+                          onClick={async () => {
+                            await Promise.all(unreadTeamNotifications.map((n) => api.post(`/notifications/${n.id}/read`)));
+                            loadNotifications();
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      {teamNotifications.slice(0, 8).map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`rounded-xl p-3 border cursor-pointer transition-colors hover:bg-white/[0.04] ${notification.is_read ? "border-white/[0.04]" : "border-indigo-500/20 bg-indigo-500/[0.05]"}`}
+                          onClick={() => openTeamNotification(notification)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-bold" style={{ color: notification.is_read ? "var(--text-secondary)" : "var(--text-primary)" }}>{notification.title}</p>
+                              <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{notification.message}</p>
+                            </div>
+                            {!notification.is_read && (
+                              <button className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 shrink-0" onClick={() => dismissNotification(notification.id)}>
+                                Mark read
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>{notification.created_at ? new Date(notification.created_at).toLocaleString() : ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {regLoading ? (
                   <div className="grid gap-5 md:grid-cols-2">
@@ -1137,7 +1334,8 @@ if (!/^\d{14}$/.test(enrollment)) {
                       return (
                         <motion.article
                           key={reg.id}
-                          className="glass-premium rounded-[1.75rem] p-6 border border-white/[0.03] relative flex flex-col justify-between"
+                          id={`team-card-${reg.id}`}
+                          className={`glass-premium rounded-[1.75rem] p-6 border relative flex flex-col justify-between transition-all duration-500 ${highlightedTeamId === String(reg.id) ? "border-indigo-400 ring-2 ring-indigo-400/50 shadow-lg shadow-indigo-500/20" : "border-white/[0.03]"}`}
                           initial={{ opacity: 0, y: 16 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.04 }}
@@ -1435,7 +1633,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                 <span className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><CalendarDays size={18} /></span>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Date & Time</p>
-                  <p className="font-semibold text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>{detailsEvent.date} at {detailsEvent.time}</p>
+                  <p className="font-semibold text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>{formatEventDate(detailsEvent.date)} at {detailsEvent.time || "Time to be announced"}</p>
                 </div>
               </div>
               <div className="rounded-2xl p-4 border border-white/[0.03] flex items-center gap-3.5" style={{ background: "var(--bg-card)" }}>
@@ -1476,6 +1674,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                   <div className="grid gap-2.5">
                     {openTeamsForEvent.map((team) => {
                       const hasRequested = team.join_requests?.includes(user?.enrollment_number);
+                      const isAcceptedMember = isAcceptedTeamMember(team);
                       return (
                         <div key={team.id} className="flex justify-between items-center rounded-xl p-3 border border-white/[0.02]" style={{ background: "var(--bg-card)" }}>
                           <div>
@@ -1484,7 +1683,17 @@ if (!/^\d{14}$/.test(enrollment)) {
                               Captain: {team.user?.full_name} · Players: {1 + (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}/{detailsEvent.team_size} · Need {detailsEvent.team_size - 1 - (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}
                             </p>
                           </div>
-                          <button
+                          {isOwnTeam(team) ? (
+                            <div className="flex items-center gap-2">
+                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View</button>
+                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => leaveTeam(team.id)}>Remove</button>
+                            </div>
+                          ) : isAcceptedMember ? (
+                            <div className="flex items-center gap-2">
+                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View Team</button>
+                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => handleLeaveAsTeammate(team.id)}>Remove as Teammate</button>
+                            </div>
+                          ) : <button
                             className="btn btn-primary text-[10px] py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
                             onClick={() => {
                               setDetailsEvent(null);
@@ -1499,7 +1708,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                             ) : (
                               "Request To Join"
                             )}
-                          </button>
+                          </button>}
                         </div>
                       );
                     })}
@@ -1543,7 +1752,7 @@ if (!/^\d{14}$/.test(enrollment)) {
             <div className="rounded-[1.25rem] p-4 bg-gradient-to-r from-cyan-500/10 to-indigo-500/5 border border-white/[0.04]">
               <p className="text-xs font-bold uppercase tracking-wider text-cyan-400">{regEvent.event_type} event</p>
               <p className="mt-1 font-bold text-lg" style={{ color: "var(--text-primary)" }}>{regEvent.name}</p>
-              <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{regEvent.date} · {regEvent.venue} · {regEvent.category}</p>
+              <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{formatEventDate(regEvent.date)} · {regEvent.venue} · {regEvent.category}</p>
               {regEvent.available_seats > 0 ? (
                 <p className="mt-1 text-xs font-semibold text-emerald-400">Seats left: {regEvent.available_seats} / {regEvent.maximum_seats}</p>
               ) : (
@@ -1614,11 +1823,21 @@ if (!/^\d{14}$/.test(enrollment)) {
                     .map((m, i) => (i !== idx ? m.enrollment_number : ""))
                     .filter(Boolean);
                   const availableStudents = students.filter(
-                    (s) =>
-                      s.enrollment_number &&
-                      s.enrollment_number !== user?.enrollment_number &&
-                      !selectedEnrollments.includes(s.enrollment_number) &&
-                      (!user?.gender || s.gender === user?.gender)
+                    (s) => {
+                      const memberGender = String(s.gender || "").trim().toLowerCase();
+                      const genderCompatible =
+                        !isGenderSelected ||
+                        memberGender === userGender ||
+                        !memberGender ||
+                        memberGender === "other";
+
+                      return (
+                        s.enrollment_number &&
+                        String(s.enrollment_number).trim() !== String(user?.enrollment_number || "").trim() &&
+                        !selectedEnrollments.includes(s.enrollment_number) &&
+                        genderCompatible
+                      );
+                    }
                   );
                   return (
                     <div key={idx} className="grid gap-3 p-4 rounded-xl border border-white/[0.03]" style={{ background: "var(--bg-primary)" }}>
@@ -1632,7 +1851,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                           <option value="">-- Choose Member --</option>
                           {availableStudents.map((s) => (
                             <option key={s.enrollment_number} value={s.enrollment_number}>
-                              {s.enrollment_number} - {s.full_name}
+                              {s.full_name || s.name || "Unnamed player"} ({s.enrollment_number})
                             </option>
                           ))}
                         </select>
@@ -1640,6 +1859,7 @@ if (!/^\d{14}$/.test(enrollment)) {
                       {member.enrollment_number && (
                         <div className="mt-1 grid grid-cols-2 gap-3 text-xs rounded-xl p-3 border border-white/[0.03]" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>
                           <div><span className="text-[9px] uppercase font-bold text-slate-500 block">Name</span> <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{member.name}</span></div>
+                          <div><span className="text-[9px] uppercase font-bold text-slate-500 block">Enrollment</span> <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>{member.enrollment_number}</span></div>
                           <div><span className="text-[9px] uppercase font-bold text-slate-500 block">Email</span> <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>{member.email}</span></div>
                           <div><span className="text-[9px] uppercase font-bold text-slate-500 block">Branch</span> <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>{member.branch}</span></div>
                         </div>

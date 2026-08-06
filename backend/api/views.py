@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .auth import create_token, decode_token
-from .documents import AuditLog, Event, Notification, Registration, TeamMember, User
+from .documents import AuditLog, DashboardBanner, Event, Notification, Registration, TeamMember, User
 from .permissions import ROLE_PERMISSIONS, IsAdminMongo, IsAuthenticatedMongo, RBACPermission, has_permission
 from .serializers import (
     AdminUserSerializer,
@@ -91,6 +91,25 @@ def update_team_completion_status(registration):
         active_count = 1 + sum(1 for m in registration.team_members if (m.invite_status if hasattr(m, "invite_status") else m.get("invite_status")) != "rejected")
         if active_count >= max_size:
             registration.looking_for_players = False
+
+
+def _normalise_gender(value):
+    """Return the canonical gender value used for team matching."""
+    return str(value or "").strip().lower()
+
+
+def _can_join_team(registration, player):
+    """Teams recruiting players are single-gender teams."""
+    # A registration can outlive its captain if the user was deleted. Treat
+    # that orphaned team as unavailable instead of failing the whole listing.
+    try:
+        captain = registration.user
+    except Exception:
+        return False
+
+    captain_gender = _normalise_gender(captain.gender if captain else "")
+    player_gender = _normalise_gender(player.gender if player else "")
+    return captain_gender in ("male", "female") and captain_gender == player_gender
 
 
 def get_recent_activities():
@@ -191,7 +210,6 @@ class LoginView(APIView):
         history.append(timestamp().isoformat())
         user.login_history = history[-20:]
         user.save()
-        create_notification(user, "system", "New login", "Your account was just accessed successfully.", "user", user.id)
         log_audit(user, "login", "auth", user.id, [user.email])
 
         return ok(
@@ -265,7 +283,12 @@ class UserEnrollmentListView(APIView):
     permission_classes = [IsAuthenticatedMongo]
 
     def get(self, request):
-        users = User.objects(role="student", is_active=True).order_by("enrollment_number")
+        # Player accounts may be stored as either `student` (new signups) or
+        # `user` (imported/legacy accounts). Include both in team registration.
+        users = User.objects(
+            role__in=("student", "user"),
+            is_active=True,
+        ).order_by("enrollment_number")
         return ok([user_to_dict(user) for user in users])
 
 
@@ -441,6 +464,37 @@ class AdminSystemSettingsView(APIView):
         )
 
 
+class DashboardBannerView(APIView):
+    permission_classes = [IsAuthenticatedMongo]
+
+    def get(self, request):
+        banner = DashboardBanner.objects.first()
+        if not banner:
+            banner = DashboardBanner().save()
+        return ok({
+            "title": banner.title,
+            "event_dates": banner.event_dates,
+            "venue": banner.venue,
+            "registration_deadline": banner.registration_deadline,
+        })
+
+    def put(self, request):
+        if not has_permission(request.user, "settings.manage"):
+            return fail("Admin access required", status=403)
+        banner = DashboardBanner.objects.first() or DashboardBanner()
+        for field in ("title", "event_dates", "venue", "registration_deadline"):
+            if field in request.data:
+                setattr(banner, field, str(request.data.get(field) or "").strip())
+        banner.updated_at = timestamp()
+        banner.save()
+        return ok({
+            "title": banner.title,
+            "event_dates": banner.event_dates,
+            "venue": banner.venue,
+            "registration_deadline": banner.registration_deadline,
+        }, "Dashboard banner updated")
+
+
 class AdminRolesView(APIView):
     permission_classes = [RBACPermission]
     required_permission = "roles.manage"
@@ -532,8 +586,56 @@ class EventDetailView(APIView):
         event = self.get_event(event_id)
         if not event:
             return fail("Event not found", status=404)
-        serializer = EventSerializer(data=request.data, partial=True)
+        # Normalize incoming data to avoid common validation errors (strings for ints/bools)
+        incoming = dict(request.data) if request.data is not None else {}
+        # Coerce integer fields
+        int_fields = ["team_size", "registration_fee", "maximum_teams", "maximum_seats", "available_seats"]
+        for f in int_fields:
+            if f in incoming:
+                try:
+                    val = incoming.get(f)
+                    if isinstance(val, str) and val.strip() == "":
+                        # remove empty strings to allow partial updates
+                        incoming.pop(f, None)
+                    else:
+                        incoming[f] = int(val)
+                except Exception:
+                    # leave original value; serializer will report exact error
+                    pass
+        # Coerce boolean fields
+        bool_fields = ["is_archived", "is_published"]
+        for f in bool_fields:
+            if f in incoming:
+                v = incoming.get(f)
+                if isinstance(v, str):
+                    incoming[f] = v.lower() == "true"
+                else:
+                    incoming[f] = bool(v)
+        # Normalize event_type casing
+        if "event_type" in incoming and isinstance(incoming["event_type"], str):
+            incoming["event_type"] = incoming["event_type"].lower()
+
+        # Convert explicit nulls for optional text fields to empty string to satisfy CharField (allow_blank=True)
+        optional_text_fields = [
+            "banner_image",
+            "registration_deadline",
+            "category",
+            "coordinator",
+            "rules",
+            "faq",
+            "prize_details",
+        ]
+        for f in optional_text_fields:
+            if f in incoming and incoming[f] is None:
+                incoming[f] = ""
+
+        serializer = EventSerializer(data=incoming, partial=True)
         if not serializer.is_valid():
+            # Log validation errors to server console for debugging
+            try:
+                print("[Event update] Validation errors:", serializer.errors)
+            except Exception:
+                pass
             return fail("Validation failed", serializer.errors)
         for field, value in serializer.validated_data.items():
             setattr(event, field, value)
@@ -755,6 +857,15 @@ class RegistrationListCreateView(APIView):
             registrations = Registration.objects(
                 looking_for_players=is_looking
             )
+
+            # Team Finder must only expose teams made by users of the same
+            # gender as the currently logged-in player.
+            if is_looking:
+                registrations = [
+                    registration
+                    for registration in registrations
+                    if _can_join_team(registration, request.user)
+                ]
         else:
             registrations = Registration.objects
 
@@ -772,9 +883,16 @@ class RegistrationListCreateView(APIView):
                     Q(user=request.user) | Q(team__in=my_teams)
                 )
 
-        return ok(
-            [registration_to_dict(item) for item in registrations.order_by("-created_at")]
-        )
+        if hasattr(registrations, "order_by"):
+            registrations = registrations.order_by("-created_at")
+        else:
+            registrations = sorted(
+                registrations,
+                key=lambda registration: registration.created_at,
+                reverse=True,
+            )
+
+        return ok([registration_to_dict(item) for item in registrations])
 
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
@@ -798,6 +916,19 @@ class RegistrationListCreateView(APIView):
         data = serializer.validated_data
         event = data["event"]
 
+        # Do not allow a known opposite-gender player to be added directly to
+        # a team. Legacy records with an unknown/Other gender remain eligible.
+        if event.event_type == "team":
+            captain_gender = _normalise_gender(u.gender)
+            if captain_gender in ("male", "female"):
+                for member in data.get("team_members", []):
+                    member_user = User.objects(
+                        enrollment_number=member["enrollment_number"]
+                    ).first()
+                    member_gender = _normalise_gender(member_user.gender if member_user else "")
+                    if member_gender in ("male", "female") and member_gender != captain_gender:
+                        return fail("A team can only contain players of the same gender.", status=403)
+
         if Registration.objects(user=request.user, event=event).first():
             return fail("You are already registered for this event")
 
@@ -818,6 +949,8 @@ class RegistrationListCreateView(APIView):
         )
 
         for r in existing_regs:
+            if str(r.status or "").lower() in ("rejected", "cancelled"):
+                continue
             e = r.event
 
             if e and e.id != event.id:
@@ -1641,6 +1774,9 @@ class RegistrationJoinRequestView(APIView):
         if not registration.looking_for_players:
             return fail("This team is not currently looking for players.", status=400)
 
+        if not _can_join_team(registration, request.user):
+            return fail("You can only join a team created by someone of the same gender.", status=403)
+
         if not enrollment:
             return fail("You must have an enrollment number set on your profile to request to join a team.")
 
@@ -1666,6 +1802,36 @@ class RegistrationJoinRequestView(APIView):
         )
 
         return ok(registration_to_dict(registration), "Join request submitted successfully.")
+
+
+class RegistrationLeaveTeamView(APIView):
+    permission_classes = [IsAuthenticatedMongo]
+
+    def post(self, request, registration_id):
+        registration = Registration.objects(id=registration_id).first()
+        if not registration or not registration.team:
+            return fail("Team registration not found", status=404)
+
+        if registration.user.id == request.user.id:
+            return fail("The captain cannot leave the team. Remove the team instead.", status=400)
+
+        member = TeamMember.objects(teamId=registration.team, userId=request.user).first()
+        if not member:
+            return fail("You are not a member of this team.", status=403)
+
+        member.delete()
+        update_team_completion_status(registration)
+        registration.save()
+
+        create_notification(
+            registration.user,
+            "registration",
+            "Teammate Left",
+            f"{request.user.full_name} has left your team '{registration.team_name}'.",
+            "registration",
+            str(registration.id),
+        )
+        return ok(registration_to_dict(registration), "You have been removed from the team.")
 
 
 class RegistrationJoinAcceptView(APIView):
@@ -1697,6 +1863,9 @@ class RegistrationJoinAcceptView(APIView):
             return fail("Student account not found.")
 
         if action == "accept":
+            if not _can_join_team(registration, target_user):
+                return fail("A player can only join a team created by someone of the same gender.", status=403)
+
             # Add to team_members
             new_member = TeamMember(
                 teamId=registration.team,

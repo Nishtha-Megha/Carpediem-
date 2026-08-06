@@ -157,7 +157,7 @@ export function TeamsSection({ participants, loading, onRefresh, canManage, user
             placeholder="Search teams by name, sport, or captain..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input pl-4 pr-4 py-2 text-xs w-full rounded-lg"
+            className="search-input input pl-4 pr-4 py-2 text-base w-full rounded-lg"
             style={{ background: "var(--bg-card)" }}
           />
         </div>

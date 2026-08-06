@@ -530,6 +530,21 @@ linear-gradient(
   color: #cbd5e1;
 }
 
+/* Search fields stay highly legible in dark mode. */
+.search-input {
+  font-size: 1rem !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .search-input {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .search-input::placeholder {
+  color: rgba(255, 255, 255, 0.72) !important;
+  opacity: 1;
+}
+
 .input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
