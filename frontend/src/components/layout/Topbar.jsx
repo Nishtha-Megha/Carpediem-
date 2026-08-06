@@ -125,12 +125,10 @@ export function Topbar({
             </button>
           )}
           {sectionTitle && <div className="hidden sm:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
+              <h1 className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--text-muted)" }}>
                 {admin ? "Admin Panel" : "Dashboard"}
-              </p>
-              <h1 className="text-base font-extrabold tracking-tight mt-0.5" style={{ color: "var(--text-primary)" }}>
-                {sectionTitle}
               </h1>
+              
             </div>}
         </div>
 

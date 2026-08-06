@@ -47,6 +47,7 @@ export default function AdminLayout({ admin = false }) {
   }, [user, admin, navigate]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState(admin ? "dashboard" : "events");
   const [registrationFilterSportId, setRegistrationFilterSportId] = useState(null);
 
@@ -303,11 +304,13 @@ export default function AdminLayout({ admin = false }) {
         onLogout={handleLogout}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((value) => !value)}
         admin={admin}
       />
 
       {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-72">
+      <div className={`flex min-w-0 flex-1 flex-col transition-[padding] duration-300 ${sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}`}>
         <div className="px-5 pt-5">
           
           {/* Topbar */}

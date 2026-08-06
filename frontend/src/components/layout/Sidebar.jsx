@@ -8,7 +8,9 @@ import {
   Users,
   UserRound,
   Bell,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { RoleBadge } from "../ui/Badge";
 import { canAccess } from "../../types";
@@ -23,21 +25,19 @@ export const adminNavItems = [
   { id: "reports", label: "Reports", icon: BarChart3, permission: "reports.view" },
   { id: "settings", label: "Settings", icon: Shield, permission: "dashboard.view" }
 ];
-export function Sidebar({ user, activeSection, onSection, onLogout, open, onClose, admin = true }) {
+export function Sidebar({ user, activeSection, onSection, onLogout, open, onClose, admin = true, collapsed = false, onToggle }) {
   const visibleNav = adminNavItems.filter((item) => canAccess(user?.role, item.permission));
   const sidebarContent = <div className="flex h-full flex-col justify-between">
       <div>
         {
     /* Brand / Logo */
   }
-        <div className="mb-8 flex items-center justify-between px-2 pt-2">
+        <div className={`mb-8 flex items-center px-2 pt-2 ${collapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-500 to-green-500 font-black text-white shadow-lg shadow-green-500/20">
               C
             </div>
-            <span className="text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent dark:from-white dark:via-slate-100 dark:to-slate-400">
-              Carpedium
-            </span>
+            {!collapsed && <span className="text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent dark:from-white dark:via-slate-100 dark:to-slate-400">Carpedium</span>}
           </div>
           <button
     className="lg:hidden grid h-8 w-8 place-items-center rounded-full transition hover:bg-white/10 active:scale-95"
@@ -52,12 +52,12 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
         {
     /* Navigation */
   }
-        {admin && <nav className="space-y-1.5 px-1">
+        {admin && <nav className={`space-y-1.5 ${collapsed ? "px-0" : "px-1"}`}>
             {visibleNav.map((item) => {
     const isActive = activeSection === item.id;
     return <button
       key={item.id}
-      className="group relative flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition active:scale-[0.98]"
+      className={`group relative flex w-full items-center rounded-xl py-3 text-left text-sm font-medium transition active:scale-[0.98] ${collapsed ? "justify-center px-2" : "gap-3 px-4"}`}
       onClick={() => {
         onSection(item.id);
         onClose();
@@ -73,17 +73,15 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
     />}
 
-                  <span className={`relative z-10 transition-colors duration-200 ${isActive ? "text-green-600 dark:text-green-400" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"}`}>
+                  <span title={collapsed ? item.label : undefined} className={`relative z-10 transition-colors duration-200 ${isActive ? "text-green-600 dark:text-green-400" : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"}`}>
                     <item.icon size={18} />
                   </span>
 
-                  <span className={`relative z-10 font-semibold transition-colors duration-200 ${isActive ? "text-green-600 dark:text-green-200" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"}`}>
-                    {item.label}
-                  </span>
+                  {!collapsed && <span className={`relative z-10 font-semibold transition-colors duration-200 ${isActive ? "text-green-600 dark:text-green-200" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"}`}>{item.label}</span>}
 
                   {isActive && <motion.div
       layoutId="sidebar-indicator"
-      className="ml-auto relative z-10 h-1.5 w-1.5 rounded-full bg-green-400 shadow-glow-primary"
+      className={`${collapsed ? "absolute right-1.5" : "ml-auto"} relative z-10 h-1.5 w-1.5 rounded-full bg-green-400 shadow-glow-primary`}
     />}
                 </button>;
   })}
@@ -94,7 +92,7 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
     /* User profile card (Clerk-inspired) */
   }
       <div
-    className="rounded-2xl p-4 border"
+    className={`rounded-2xl border ${collapsed ? "p-2 flex flex-col items-center" : "p-4"}`}
     style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}
   >
         <div className="flex items-center gap-3">
@@ -104,22 +102,22 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
   >
             {user?.profile_photo ? <img src={user.profile_photo} alt="" className="h-full w-full object-cover" /> : (user?.full_name ?? "U").slice(0, 2).toUpperCase()}
           </div>
-          <div className="min-w-0 flex-1">
+          {!collapsed && <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold" style={{ color: "var(--text-primary)" }}>
               {user?.full_name}
             </p>
             <div className="mt-0.5 flex">
               <RoleBadge role={user?.role ?? "user"} />
             </div>
-          </div>
+          </div>}
         </div>
 
         <button
-    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/20 hover:bg-red-500/20 active:scale-95"
+    className={`flex items-center justify-center text-xs font-semibold transition-all bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/20 hover:bg-red-500/20 active:scale-95 ${collapsed ? "mt-3 h-10 w-10 rounded-full p-0" : "mt-4 w-full gap-2 rounded-xl px-3 py-2"}`}
     onClick={onLogout}
   >
           <LogOut size={13} />
-          Sign Out
+          {!collapsed && "Sign Out"}
         </button>
       </div>
     </div>;
@@ -128,10 +126,13 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
     /* Desktop sidebar */
   }
       <aside
-    className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col p-5 border-r lg:flex"
+    className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r lg:flex transition-[width] duration-300 ${collapsed ? "w-20 p-3" : "w-72 p-5"}`}
     style={{ background: "var(--sidebar-bg)", borderColor: "var(--border-subtle)" }}
   >
         {sidebarContent}
+        {onToggle && <button onClick={onToggle} className="absolute -right-3 top-20 z-50 grid h-7 w-7 place-items-center rounded-full border shadow-md text-slate-500 hover:text-green-400" style={{ background: "var(--bg-surface)", borderColor: "var(--border-default)" }} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>}
       </aside>
 
       {

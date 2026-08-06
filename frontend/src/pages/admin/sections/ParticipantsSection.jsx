@@ -155,10 +155,10 @@ export function ParticipantsSection({ participants, events, loading, canManage, 
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">Student Name</th>
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">Sport</th>
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">Team</th>
-                  <th className="py-4 px-6 font-bold uppercase tracking-wider">Roster Size</th>
+                  <th className="py-4 px-6 font-bold uppercase tracking-wider">Team Size</th>
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">Registration Date</th>
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">Registration Status</th>
-                  <th className="py-4 px-6 font-bold uppercase tracking-wider text-right">Actions</th>
+                  
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.03]">
@@ -190,14 +190,7 @@ export function ParticipantsSection({ participants, events, loading, canManage, 
                             <Eye size={12} /> View Team
                           </button>
                         )}
-                        {canManage && item.registration_type === "team" && (
-    <button
-        className="btn-secondary ..."
-        onClick={() => setSelectedRegForRoster(item)}
-    >
-        <Eye size={12}/> View Team
-    </button>
-)}
+                        
                       </div>
                     </td>
                   </tr>
