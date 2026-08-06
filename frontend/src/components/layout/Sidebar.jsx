@@ -79,9 +79,9 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
 
                   {!collapsed && <span className={`relative z-10 font-semibold transition-colors duration-200 ${isActive ? "text-green-600 dark:text-green-200" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"}`}>{item.label}</span>}
 
-                  {isActive && <motion.div
+                  {isActive && !collapsed && <motion.div
       layoutId="sidebar-indicator"
-      className={`${collapsed ? "absolute right-1.5" : "ml-auto"} relative z-10 h-1.5 w-1.5 rounded-full bg-green-400 shadow-glow-primary`}
+      className="ml-auto relative z-10 h-1.5 w-1.5 rounded-full bg-green-400 shadow-glow-primary"
     />}
                 </button>;
   })}
