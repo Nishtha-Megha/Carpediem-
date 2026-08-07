@@ -136,7 +136,7 @@ export default function About() {
                 <p className="mx-auto mt-5 max-w-xl leading-7" style={{ color: "rgba(255,255,255,0.8)" }}>Join the community that keeps LJ University moving, competing, and connected.</p>
               </ScrollReveal>
               <ScrollReveal direction="up" delay={0.36}>
-                <Link to="/signup" className="btn btn-primary btn-lg mt-8">Join Carpediem <ArrowRight size={18} /></Link>
+                <Link to="/login" className="btn btn-primary btn-lg mt-8">Join Carpediem <ArrowRight size={18} /></Link>
               </ScrollReveal>
             </div>
           </div>

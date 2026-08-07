@@ -9,7 +9,6 @@ import { useTheme } from "./hooks/useTheme";
 const Landing = lazy(() => import("./pages/Landing"));
 const About = lazy(() => import("./pages/About"));
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
-const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const UserDashboard = lazy(() => import("./pages/dashboard/UserDashboard"));
 const EventDetailsPage = lazy(() => import("./pages/events/EventDetailsPage"));
@@ -63,9 +62,7 @@ function AppRoutes() {
         <Route path="/login" element={
           <PublicOnly><LoginPage /></PublicOnly>
         } />
-        <Route path="/signup" element={
-          <PublicOnly><SignupPage /></PublicOnly>
-        } />
+        <Route path="/signup" element={<Navigate to="/login" replace />} />
 
         {/* User dashboard */}
         <Route path="/dashboard" element={

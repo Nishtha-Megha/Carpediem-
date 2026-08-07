@@ -204,13 +204,6 @@ export default function LoginPage() {
             {isSubmitting ? <><Loader2 size={17} className="animate-spin" /> Signing in…</> : <>Sign In <ArrowRight size={17} /></>}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          Don't have an account?{" "}
-          <Link to="/signup" className="font-semibold text-pink-400 transition hover:opacity-80">
-            Create account
-          </Link>
-        </p>
       </motion.div>
     </div>;
 }

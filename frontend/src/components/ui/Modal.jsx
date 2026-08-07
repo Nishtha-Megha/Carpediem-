@@ -9,7 +9,8 @@ export function Modal({
   subtitle,
   maxWidth = "max-w-2xl",
   children,
-  footer
+  footer,
+  noPadding = false
 }) {
   const panelRef = useRef(null);
   useEffect(() => {
@@ -51,7 +52,7 @@ export function Modal({
             ref={panelRef}
             role="dialog"
             aria-modal="true"
-            className={`glass relative max-h-[92vh] w-full ${maxWidth} overflow-y-auto rounded-[1.75rem] p-6 admin-scroll`}
+            className={`glass relative max-h-[92vh] w-full ${maxWidth} overflow-y-auto rounded-[1.75rem] ${noPadding ? "" : "p-6"} admin-scroll`}
             initial={{ opacity: 0, y: 28, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 28, scale: 0.97 }}

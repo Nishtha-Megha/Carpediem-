@@ -5,6 +5,7 @@ import { Logo } from "../../components/brand/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays,
+  Calendar,
   CheckCircle2,
   Clock,
   Plus,
@@ -1570,160 +1571,242 @@ if (!/^\d{14}$/.test(enrollment)) {
       </main>
 
       {/* ══ DETAILS / VIEW EVENT MODAL ═════════════════════════════════════ */}
+      {/* ══ DETAILS / VIEW EVENT MODAL ═════════════════════════════════════ */}
       <Modal
         open={!!detailsEvent}
         onClose={() => setDetailsEvent(null)}
-        title={detailsEvent?.name ?? "Event Details"}
-        subtitle="Event Information"
-        maxWidth="max-w-4xl"
-        footer={<>
-          <button className="btn-secondary text-sm" onClick={() => setDetailsEvent(null)}>Close</button>
-
-          {detailsEvent && !myRegisteredIds.has(detailsEvent.id) && (
-            <>
-              {detailsEvent.event_type === "team" && (
-                <>
-                  <button className="btn-primary text-sm font-bold flex items-center gap-1 shadow-sm" onClick={() => {
-                    const ev = detailsEvent;
-                    setDetailsEvent(null);
-                    openRegister(ev);
-                  }}>
-                    Create Team
-                  </button>
-                </>
-              )}
-
-              {detailsEvent.event_type !== "team" && (
-                <button
-                  className="btn-primary text-sm flex items-center gap-1.5 font-bold"
-                  onClick={() => {
-                    const ev = detailsEvent;
-                    setDetailsEvent(null);
-                    openRegister(ev);
-                  }}
-                >
-                  <Plus size={14} /> {detailsEvent.available_seats <= 0 ? "Join Waitlist" : "Register"}
-                </button>
-              )}
-            </>
-          )}
-        </>}
+        title={undefined}
+        subtitle={undefined}
+        maxWidth="max-w-6xl"
+        noPadding={true}
       >
         {detailsEvent && (
-          <div className="grid gap-5">
-            {detailsEvent.banner_image && (
-              <div className="h-44 rounded-2xl bg-cover bg-center border border-white/10" style={{ backgroundImage: `url(${detailsEvent.banner_image})` }} />
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl p-4 border border-white/[0.03] flex items-center gap-3.5" style={{ background: "var(--bg-card)" }}>
-                <span className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><MapPin size={18} /></span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Venue</p>
-                  <p className="font-semibold text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>{detailsEvent.venue}</p>
+          <div className="flex flex-col bg-slate-950/20 text-white rounded-[1.75rem] overflow-hidden">
+            {/* Cinematic Hero Section */}
+            <div className="relative w-full h-[600px] overflow-hidden">
+              {detailsEvent.banner_image ? (
+                <img
+                  src={detailsEvent.banner_image}
+                  alt={detailsEvent.name}
+                  className="h-full w-full object-cover object-center transition-transform duration-700 hover:scale-105"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center text-slate-500 gap-2">
+                  <CalendarDays size={48} className="text-white/10 animate-pulse" />
+                  <span className="text-xs font-bold text-white/20 uppercase tracking-widest">No Banner Available</span>
                 </div>
-              </div>
-              <div className="rounded-2xl p-4 border border-white/[0.03] flex items-center gap-3.5" style={{ background: "var(--bg-card)" }}>
-                <span className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><CalendarDays size={18} /></span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Date & Time</p>
-                  <p className="font-semibold text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>{formatEventDate(detailsEvent.date)} at {detailsEvent.time || "Time to be announced"}</p>
-                </div>
-              </div>
-              <div className="rounded-2xl p-4 border border-white/[0.03] flex items-center gap-3.5" style={{ background: "var(--bg-card)" }}>
-                <span className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20"><Sparkles size={18} /></span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Category & Type</p>
-                  <p className="font-semibold text-sm mt-0.5 capitalize" style={{ color: "var(--text-primary)" }}>{detailsEvent.category} ({detailsEvent.event_type})</p>
-                </div>
-              </div>
-              <div className="rounded-2xl p-4 border border-white/[0.03] flex items-center gap-3.5" style={{ background: "var(--bg-card)" }}>
-                <span className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><Ticket size={18} /></span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Available Seats</p>
-                  <p className="font-semibold text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
-                    {detailsEvent.available_seats} / {detailsEvent.maximum_seats} remaining
-                  </p>
-                </div>
-              </div>
-            </div>
+              )}
 
-            <div className="space-y-1.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Description</h4>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{detailsEvent.description}</p>
-            </div>
+              {/* Close Button */}
+              <button
+                className="absolute top-6 right-6 z-20 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-slate-950/60 text-slate-300 transition-all hover:bg-slate-950/80 hover:text-white hover:scale-105 active:scale-95"
+                onClick={() => setDetailsEvent(null)}
+              >
+                <X size={17} />
+              </button>
 
-            {/* Team Finder: open teams recruiting for this sport */}
-            {detailsEvent.event_type === "team" && (
-              <div className="space-y-3 pt-3 border-t border-white/[0.04]">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Users size={14} className="text-indigo-400" /> Teams Recruiting Players (Team Finder)
-                </h4>
+              {/* Premium Gradient Overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  background: "linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.75) 30%, rgba(0,0,0,.35) 60%, rgba(0,0,0,0) 100%)"
+                }}
+              />
 
-                {openTeamsForEvent.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic p-4 rounded-xl border border-white/[0.01] bg-white/[0.005]">
-                    No active teams are looking for members for this match. You can create your own team!
-                  </p>
-                ) : (
-                  <div className="grid gap-2.5">
-                    {openTeamsForEvent.map((team) => {
-                      const hasRequested = team.join_requests?.includes(user?.enrollment_number);
-                      const isAcceptedMember = isAcceptedTeamMember(team);
-                      return (
-                        <div key={team.id} className="flex justify-between items-center rounded-xl p-3 border border-white/[0.02]" style={{ background: "var(--bg-card)" }}>
-                          <div>
-                            <p className="font-bold text-slate-200 text-sm">{team.team_name || "Titans"}</p>
-                            <p className="text-[10px] text-slate-500 mt-0.5">
-                              Captain: {team.user?.full_name} · Players: {1 + (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}/{detailsEvent.team_size} · Need {detailsEvent.team_size - 1 - (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}
-                            </p>
-                          </div>
-                          {isOwnTeam(team) ? (
-                            <div className="flex items-center gap-2">
-                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View</button>
-                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => leaveTeam(team.id)}>Remove</button>
-                            </div>
-                          ) : isAcceptedMember ? (
-                            <div className="flex items-center gap-2">
-                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View Team</button>
-                              <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => handleLeaveAsTeammate(team.id)}>Remove as Teammate</button>
-                            </div>
-                          ) : <button
-                            className="btn btn-primary text-[10px] py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
-                            onClick={() => {
-                              setDetailsEvent(null);
-                              handleRequestJoinTeam(team.id);
-                            }}
-                            disabled={hasRequested}
-                          >
-                            {hasRequested ? (
-                              <>
-                                <UserCheck size={10} className="text-emerald-400" /> Requested
-                              </>
-                            ) : (
-                              "Request To Join"
-                            )}
-                          </button>}
-                        </div>
-                      );
-                    })}
+              {/* Text sits on top of gradient (aligned bottom-left) */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-20 flex flex-col justify-end text-left">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-400">EVENT INFORMATION</span>
+                <h2 className="text-3xl md:text-5xl font-black mt-2 text-white tracking-tight drop-shadow-md leading-tight">
+                  {detailsEvent.name}
+                </h2>
+                <p className="text-sm md:text-base text-slate-300/90 max-w-3xl mt-4 leading-relaxed drop-shadow-sm">
+                  {detailsEvent.description}
+                </p>
+
+                {/* Inline Glassmorphism Cards inside Hero */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 w-full mt-8">
+                  {/* Venue */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><MapPin size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Venue</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate">{detailsEvent.venue || "TBA"}</p>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            {detailsEvent.prize_details && (
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Prizes</h4>
-                <p className="text-sm leading-relaxed text-slate-300" style={{ color: "var(--text-secondary)" }}>{detailsEvent.prize_details}</p>
-              </div>
-            )}
+                  {/* Date & Time */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><CalendarDays size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Date & Time</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate">
+                        {formatEventDate(detailsEvent.date)} at {detailsEvent.time || "TBA"}
+                      </p>
+                    </div>
+                  </div>
 
-            {detailsEvent.rules && (
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Rules & Guidelines</h4>
-                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>{detailsEvent.rules}</p>
+                  {/* Category */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20"><Award size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Category</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate capitalize">{detailsEvent.category || "General"}</p>
+                    </div>
+                  </div>
+
+                  {/* Team / Individual */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><Users size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Type</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate capitalize">
+                        {detailsEvent.event_type === "team" ? `Team (${detailsEvent.team_size} Players)` : "Individual"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Registration Deadline */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20"><Calendar size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Deadline</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate">
+                        {formatEventDate(detailsEvent.registration_deadline || detailsEvent.date)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Coordinator */}
+                  <div className="glass rounded-[1.25rem] p-4 border border-white/[0.08] bg-slate-950/40 backdrop-blur-md shadow-lg flex items-center gap-3 hover:bg-slate-950/60 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                    <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20"><User size={16} /></span>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Coordinator</p>
+                      <p className="mt-0.5 font-bold text-xs text-white truncate">{detailsEvent.coordinator || "TBA"}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Content Sections below the Hero Banner */}
+            <div className="p-6 md:p-10 grid gap-6">
+              {/* About Event */}
+              <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md">
+                <h2 className="text-base font-extrabold tracking-tight text-white mb-3">About Event</h2>
+                <p className="text-sm leading-relaxed text-slate-300">{detailsEvent.description}</p>
+              </div>
+
+              {/* Rules & Guidelines */}
+              {detailsEvent.rules && (
+                <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md">
+                  <h2 className="text-base font-extrabold tracking-tight text-white mb-3">Rules & Guidelines</h2>
+                  <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">{detailsEvent.rules}</p>
+                </div>
+              )}
+
+              {/* Prizes */}
+              {detailsEvent.prize_details && (
+                <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md">
+                  <h2 className="text-base font-extrabold tracking-tight text-white mb-3">Prizes & Rewards</h2>
+                  <p className="text-sm leading-relaxed text-slate-300">{detailsEvent.prize_details}</p>
+                </div>
+              )}
+
+              {/* Team Finder (Only for Team Events) */}
+              {detailsEvent.event_type === "team" && (
+                <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md space-y-4">
+                  <h2 className="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+                    <Users size={16} className="text-indigo-400" /> Teams Recruiting Players (Team Finder)
+                  </h2>
+
+                  {openTeamsForEvent.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic p-4 rounded-xl border border-white/[0.01] bg-white/[0.005]">
+                      No active teams are looking for members for this match. You can create your own team!
+                    </p>
+                  ) : (
+                    <div className="grid gap-2.5">
+                      {openTeamsForEvent.map((team) => {
+                        const hasRequested = team.join_requests?.includes(user?.enrollment_number);
+                        const isAcceptedMember = isAcceptedTeamMember(team);
+                        return (
+                          <div key={team.id} className="flex justify-between items-center rounded-xl p-3.5 border border-white/[0.02] bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
+                            <div>
+                              <p className="font-bold text-slate-200 text-sm">{team.team_name || "Titans"}</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">
+                                Captain: {team.user?.full_name} · Players: {1 + (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}/{detailsEvent.team_size} · Need {detailsEvent.team_size - 1 - (team.team_members?.filter(m => m.invite_status !== "rejected").length || 0)}
+                              </p>
+                            </div>
+                            {isOwnTeam(team) ? (
+                              <div className="flex items-center gap-2">
+                                <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View</button>
+                                <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => leaveTeam(team.id)}>Remove</button>
+                              </div>
+                            ) : isAcceptedMember ? (
+                              <div className="flex items-center gap-2">
+                                <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold" onClick={() => { setDetailsEvent(null); setActiveTab("my-teams"); }}>View Team</button>
+                                <button className="btn btn-secondary text-[10px] py-1.5 px-3 rounded-lg font-bold text-rose-400 border-rose-500/20 bg-rose-500/5" onClick={() => handleLeaveAsTeammate(team.id)}>Remove as Teammate</button>
+                              </div>
+                            ) : (
+                              <button
+                                className="btn btn-primary text-[10px] py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                                onClick={() => {
+                                  setDetailsEvent(null);
+                                  handleRequestJoinTeam(team.id);
+                                }}
+                                disabled={hasRequested}
+                              >
+                                {hasRequested ? (
+                                  <>
+                                    <UserCheck size={10} className="text-emerald-400" /> Requested
+                                  </>
+                                ) : (
+                                  "Request To Join"
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Modal Actions Footer */}
+            <div className="border-t border-white/[0.06] pt-6 px-6 pb-6 md:px-10 md:pb-10 flex justify-end gap-3 bg-slate-950/20 rounded-b-[1.75rem]">
+              <button className="btn-secondary text-sm" onClick={() => setDetailsEvent(null)}>Close</button>
+
+              {detailsEvent && !myRegisteredIds.has(detailsEvent.id) && (
+                <>
+                  {detailsEvent.event_type === "team" && (
+                    <button
+                      className="btn-primary text-sm font-bold flex items-center gap-1 shadow-sm"
+                      onClick={() => {
+                        const ev = detailsEvent;
+                        setDetailsEvent(null);
+                        openRegister(ev);
+                      }}
+                    >
+                      Create Team
+                    </button>
+                  )}
+
+                  {detailsEvent.event_type !== "team" && (
+                    <button
+                      className="btn-primary text-sm flex items-center gap-1.5 font-bold"
+                      onClick={() => {
+                        const ev = detailsEvent;
+                        setDetailsEvent(null);
+                        openRegister(ev);
+                      }}
+                    >
+                      <Plus size={14} /> {detailsEvent.available_seats <= 0 ? "Join Waitlist" : "Register"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         )}
       </Modal>

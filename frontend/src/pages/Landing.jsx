@@ -228,8 +228,7 @@ export default function Landing() {
               </motion.div>
             </button>
 
-            <Link to="/login" className="btn btn-secondary hidden text-sm md:inline-flex">Login</Link>
-            <Link to="/signup" className="btn btn-primary hidden text-sm md:inline-flex">
+            <Link to="/login" className="btn btn-primary hidden text-sm md:inline-flex">
               Get Started <ArrowRight size={15} />
             </Link>
 
@@ -263,8 +262,7 @@ export default function Landing() {
                 ))}
               </nav>
               <div className="mt-auto flex flex-col gap-3">
-                <button className="btn btn-secondary w-full" onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}>Login</button>
-                <button className="btn btn-primary w-full" onClick={() => { setMobileMenuOpen(false); navigate("/signup"); }}>Get Started</button>
+                <button className="btn btn-primary w-full" onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}>Get Started</button>
               </div>
             </motion.div>
           </>
@@ -448,8 +446,8 @@ export default function Landing() {
               }}
               className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
             >
-              <Link to="/signup" className="btn btn-primary btn-lg">
-                Join Now <ArrowRight size={18} />
+              <Link to="/login" className="btn btn-primary btn-lg">
+                Get Started <ArrowRight size={18} />
               </Link>
               <a
                 href="#how-it-works"
