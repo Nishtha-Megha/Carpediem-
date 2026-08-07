@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import uuid
 
 from mongoengine import (
     BooleanField,
@@ -43,6 +44,12 @@ class User(Document):
     timezone = StringField(default="Asia/Kolkata")
     created_at = DateTimeField(db_field="createdAt", default=now)
     updated_at = DateTimeField(db_field="updatedAt", default=now)
+
+    def clean(self):
+        """Normalize legacy MongoDB values before MongoEngine validates them."""
+        if self.phone is not None and not isinstance(self.phone, str):
+            self.phone = str(self.phone)
+        super().clean()
 
     meta = {"collection": "users", "indexes": ["email", "role"]}
 
@@ -168,6 +175,11 @@ class Registration(Document):
     waitlist_position = IntField(db_field="waitlistPosition", default=0)
     looking_for_players = BooleanField(db_field="lookingForPlayers", default=False)
     join_requests = ListField(StringField(), db_field="joinRequests", default=list)
+    # QR codes carry this opaque value; participant data remains server-side.
+    # Do not build a unique MongoDB index here: legacy documents may contain
+    # null/missing qrToken values. UUID generation still gives each new record
+    # an effectively unique token without breaking the existing collection.
+    qr_token = StringField(db_field="qrToken", default=lambda: uuid.uuid4().hex)
     
 
     # Temporary properties and fields for backwards compatibility

@@ -1,6 +1,8 @@
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import uuid
 
+from bson import ObjectId
 from mongoengine import Q
 from rest_framework.views import APIView
 
@@ -206,8 +208,16 @@ class LoginView(APIView):
         if not user.is_active:
             return fail("Your account is blocked", status=403)
         user.last_login = timestamp()
-        history = list(user.login_history or [])
-        history.append(timestamp().isoformat())
+        history = []
+        for entry in user.login_history or []:
+            if isinstance(entry, datetime):
+                history.append(entry)
+            elif isinstance(entry, str):
+                try:
+                    history.append(datetime.fromisoformat(entry.replace("Z", "+00:00")))
+                except ValueError:
+                    continue
+        history.append(timestamp())
         user.login_history = history[-20:]
         user.save()
         log_audit(user, "login", "auth", user.id, [user.email])
@@ -618,7 +628,6 @@ class EventDetailView(APIView):
         # Convert explicit nulls for optional text fields to empty string to satisfy CharField (allow_blank=True)
         optional_text_fields = [
             "banner_image",
-            "registration_deadline",
             "category",
             "coordinator",
             "rules",
@@ -628,6 +637,8 @@ class EventDetailView(APIView):
         for f in optional_text_fields:
             if f in incoming and incoming[f] is None:
                 incoming[f] = ""
+        if "registration_deadline" in incoming and incoming["registration_deadline"] == "":
+            incoming["registration_deadline"] = None
 
         serializer = EventSerializer(data=incoming, partial=True)
         if not serializer.is_valid():
@@ -916,6 +927,14 @@ class RegistrationListCreateView(APIView):
         data = serializer.validated_data
         event = data["event"]
 
+        # Registration is closed as soon as the configured deadline is reached.
+        deadline = event.registration_deadline
+        if deadline:
+            if deadline.tzinfo is None:
+                deadline = deadline.replace(tzinfo=timezone.utc)
+            if timestamp() >= deadline:
+                return fail("Registration deadline has passed for this event.", status=400)
+
         # Do not allow a known opposite-gender player to be added directly to
         # a team. Legacy records with an unknown/Other gender remain eligible.
         if event.event_type == "team":
@@ -1001,6 +1020,21 @@ class RegistrationListCreateView(APIView):
 
         registration.save()
 
+        # Persist the selected roster as team members so the entry QR resolves
+        # to every participant, not only the captain.
+        if registration.team:
+            for member in data.get("team_members", []):
+                invited_user = User.objects(enrollment_number=member["enrollment_number"]).first()
+                TeamMember(
+                    teamId=registration.team,
+                    userId=invited_user,
+                    enrollment=member["enrollment_number"],
+                    isCaptain=False,
+                    college_name=getattr(invited_user, "college_name", "LJ University"),
+                    location=getattr(invited_user, "location", ""),
+                    invite_status="accepted",
+                ).save()
+
         update_team_completion_status(registration)
         registration.save()
 
@@ -1040,6 +1074,31 @@ class RegistrationListCreateView(APIView):
             "Registration successful",
             201,
         )
+
+
+class RegistrationQrDetailsView(APIView):
+    """Public read-only endpoint used by the entry QR page."""
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, qr_token):
+        registration = Registration.objects(qr_token=qr_token).first()
+        # Legacy registrations were created before qrToken existed. If an old
+        # QR contains the registration id, upgrade that record on first scan.
+        if not registration:
+            # Never pass arbitrary QR text to MongoEngine's ObjectId field.
+            # UUID QR tokens are 32 characters and are handled above.
+            registration = None
+            if ObjectId.is_valid(qr_token):
+                registration = Registration.objects(id=ObjectId(qr_token)).first()
+            if registration:
+                registration.qr_token = uuid.uuid4().hex
+                registration.save()
+        if not registration or str(registration.status).lower() in ("cancelled", "rejected", "waitlisted"):
+            return fail("This registration QR code is invalid or inactive.", status=404)
+        data = registration_to_dict(registration)
+        data.pop("qr_token", None)
+        return ok(data)
             
 class RegistrationDetailView(APIView):
         permission_classes = [IsAuthenticatedMongo]
