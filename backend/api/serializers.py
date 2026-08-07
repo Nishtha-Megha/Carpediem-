@@ -147,6 +147,7 @@ class RegistrationSerializer(serializers.Serializer):
     branch = serializers.CharField()
     college_name = serializers.CharField(required=False, default="LJ University")
     location = serializers.CharField()
+    registration_type = serializers.ChoiceField(choices=("individual", "team"), required=False)
     team_members = TeamMemberSerializer(many=True, required=False)
     team_name = serializers.CharField(required=False, allow_blank=True)
     looking_for_players = serializers.BooleanField(required=False, default=False)
@@ -256,6 +257,14 @@ def registration_to_dict(registration):
     except DoesNotExist:
         event_data = None
 
+    normalized_status = str(registration.status or "").strip().lower()
+    if normalized_status in {"pending", "approved", "registered"}:
+        normalized_status = "registered"
+    elif normalized_status in {"rejected", "cancelled"}:
+        normalized_status = "cancelled"
+    elif normalized_status == "waitlisted":
+        normalized_status = "waitlisted"
+
     return {
         "id": serialize_id(registration.id),
         "user": user_data,
@@ -271,7 +280,7 @@ def registration_to_dict(registration):
         "team_members": [member.to_mongo().to_dict() if hasattr(member, "to_mongo") else member for member in registration.team_members],
         "team_name": registration.team_name,
         "attended": registration.attended,
-        "status": registration.status,
+        "status": normalized_status,
         "waitlist_position": registration.waitlist_position,
         "looking_for_players": registration.looking_for_players,
         "join_requests": registration.join_requests,

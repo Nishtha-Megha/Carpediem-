@@ -253,10 +253,20 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
       /* Filters */
     }
     <div className="glass grid gap-3 rounded-[1.5rem] p-4 md:grid-cols-2 lg:grid-cols-4 border border-white/[0.03] dark:border-white/[0.05] shadow-sm">
-      <input className="search-input input text-sm" placeholder="Search events..." value={search} onChange={(e) => {
-        setSearch(e.target.value);
-        setPage(1);
-      }} />
+      <input
+        className="search-input input text-sm rounded-xl border-2 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20"
+        style={{
+          color: "var(--text-primary)",
+          background: "var(--bg-card)",
+          border: "1px solid #1f2937",
+        }}
+        placeholder="Search events..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
       <select className="input text-sm" value={catFilter} onChange={(e) => {
         setCatFilter(e.target.value);
         setPage(1);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate , useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "../components/layout/Footer";
 import { Logo } from "../components/brand/Logo";
@@ -56,9 +56,9 @@ function StarRating({ rating }) {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { label: "Home", href: "#" },
-  { label: "Events", href: "#events" },
-  { label: "About Us", href: "/about" }
+  { label: "Home", href: "#home" },
+  { label: "About Us", href: "/about" },
+  { label: "FAQ", href: "#faq" },
 ];
 
 const STATS = [
@@ -138,6 +138,23 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
+      }
+    }
+  }, [location]);
+
   useEffect(() => {
     let active = true;
     async function loadEvents() {
@@ -205,12 +222,32 @@ export default function Landing() {
               <a
                 key={item.label}
                 href={item.href}
-                className="rounded-xl px-4 py-2 text-sm font-medium transition hover:opacity-80"
+                className="
+                  group relative rounded-xl px-4 py-2 text-sm font-medium
+                  transition-all duration-300
+                  hover:-translate-y-0.5
+                "
                 style={{ color: "var(--text-secondary)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--bg-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
               >
                 {item.label}
+
+                <span
+                  className="
+                    absolute bottom-1 left-1/2 h-[2px] w-0
+                    -translate-x-1/2 rounded-full
+                    bg-gradient-to-r from-indigo-500 to-cyan-400
+                    transition-all duration-300
+                    group-hover:w-8
+                  "
+                />
               </a>
             ))}
           </nav>
@@ -271,8 +308,11 @@ export default function Landing() {
 
       {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
 
-      <section ref={heroRef} className="   relative flex min-h-screen items-center overflow-hidden pt-24 pb-16">
-        <img
+      <section
+        id="home"
+        ref={heroRef}
+        className="relative flex min-h-screen items-center overflow-hidden pt-24 pb-16"
+      >  <img
           src={heroImage}
           alt="LJ University Ahmedabad campus"
           className="absolute inset-0 h-full w-full object-cover brightness-[0.62]"
@@ -312,64 +352,6 @@ export default function Landing() {
           />
 
         </div>
-        {/* Floating decoration cards */}
-        <motion.div
-          className="absolute right-8 top-32 hidden xl:block"
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: false }}
-          animate={{
-            y: [0, -20, 0],
-            rotate: [0, 2, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{
-            transform: `translate(${parallax.x * -0.8}px, ${parallax.y * -0.5}px)`,
-          }}
-        >
-          <div className="glass rounded-2xl p-4 w-52">
-            <p className="text-xs font-semibold text-cyan-400 mb-2">📊 Live Analytics</p>
-            <p className="text-2xl font-black" style={{ color: "var(--text-primary)" }}>+23%</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>registrations today</p>
-            <div className="mt-3 flex gap-1">
-              {[40, 60, 45, 80, 55, 90, 70].map((h, i) => (
-                <div key={i} className="flex-1 rounded-sm bg-indigo-500/40" style={{ height: `${h * 0.4}px` }} />
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="absolute left-8 bottom-40 hidden xl:block"
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: false }}
-          animate={{
-            y: [0, 18, 0],
-            rotate: [0, -2, 0],
-          }}
-          transition={{
-            duration: 7,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        >
-          <div className="glass rounded-2xl p-4 w-48">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full grid place-items-center text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>AV</div>
-              <div>
-                <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Arjun V.</p>
-                <StarRating rating={5} />
-              </div>
-            </div>
-            <p className="text-xs leading-5" style={{ color: "var(--text-secondary)" }}>"Best event platform!"</p>
-          </div>
-        </motion.div>
 
         {/* Main content */}
         <div className="container relative z-10">
@@ -394,9 +376,14 @@ export default function Landing() {
             >
               The premium campus{" "}
               <span
-                className="hero-platform-gradient"
+                className="
+                  hero-platform-gradient
+                  transition-all duration-500
+                  hover:drop-shadow-[0_0_25px_rgba(129,140,248,0.55)]
+                "
                 style={{
-                  backgroundImage: "linear-gradient(90deg, #5f99f7 0%, #8feced 48%, #e48af4 100%)",
+                  backgroundImage:
+                    "linear-gradient(90deg, #5f99f7 0%, #8feced 48%, #e48af4 100%)",
                   backgroundClip: "text",
                   WebkitBackgroundClip: "text",
                   color: "transparent",
@@ -404,7 +391,8 @@ export default function Landing() {
                 }}
               >
                 event platform
-              </span>{" "}
+              </span>
+              {" "}
               for LJ University.
             </motion.h1>
 
@@ -451,9 +439,25 @@ export default function Landing() {
               </Link>
               <a
                 href="#how-it-works"
-                className="btn btn-secondary btn-lg"
+                className="
+                  group btn btn-secondary btn-lg
+                  transition-all duration-300
+                  hover:-translate-y-1
+                  hover:border-indigo-400/50
+                  hover:bg-indigo-500/10
+                  hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]
+                "
               >
-                <Play size={16} className="text-indigo-400" /> See how it works
+                <Play
+                  size={16}
+                  className="
+                    text-indigo-400
+                    transition-transform duration-300
+                    group-hover:scale-125
+                    group-hover:rotate-6
+                  "
+                />
+                See how it works
               </a>
             </motion.div>
           </div>
@@ -471,7 +475,16 @@ export default function Landing() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {STATS.map(({ label, end, suffix }, i) => (
               <ScrollReveal key={label} delay={i * 0.08}>
-                <div className="glass-premium group rounded-[1.5rem] p-6 text-center">
+                <div
+                  className="
+                    glass-premium group rounded-[1.5rem] p-6 text-center
+                    transition-all duration-400
+                    hover:-translate-y-2
+                    hover:scale-[1.02]
+                    hover:border-indigo-400/30
+                    hover:shadow-[0_20px_50px_rgba(99,102,241,0.15)]
+                  "
+                >
                   <div className="font-display text-5xl font-black text-gradient transition-all duration-300 group-hover:scale-110 group-hover:filter group-hover:drop-shadow-[0_0_15px_rgba(99,102,241,0.6)]">
                     <CountUp end={end} suffix={suffix} />
                   </div>
@@ -497,8 +510,27 @@ export default function Landing() {
                   {i < HOW_IT_WORKS.length - 1 && (
                     <div className="absolute right-0 top-10 hidden w-1/2 border-t border-dashed md:block" style={{ borderColor: "var(--border-default)" }} />
                   )}
-                  <div className="glass-premium rounded-[1.75rem] p-8 h-full flex flex-col flex-1">
-                    <div className="font-display text-6xl font-black text-gradient opacity-25 mb-4">{step}</div>
+                  <div
+                    className="
+                      glass-premium rounded-[1.75rem] p-8
+                      h-full flex flex-col flex-1
+                      transition-all duration-400
+                      hover:-translate-y-3
+                      hover:border-cyan-400/30
+                      hover:shadow-[0_20px_50px_rgba(34,211,238,0.12)]
+                    "
+                  >
+                    <div
+                      className="
+                        font-display text-6xl font-black text-gradient
+                        opacity-25
+                        transition-all duration-300
+                        group-hover:opacity-60
+                        group-hover:scale-105
+                      "
+                    >
+                      {step}
+                    </div>
                     <h3 className="font-display text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>{title}</h3>
                     <p className="text-sm leading-7" style={{ color: "var(--text-secondary)" }}>{desc}</p>
                   </div>

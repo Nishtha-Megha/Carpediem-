@@ -62,7 +62,7 @@ Optional query params: `search`, `event_type`, `status`.
   "date": "2026-08-12",
   "time": "10:00",
   "venue": "Innovation Dome",
-  "registration_deadline": "2026-08-08",
+  "registration_deadline": "2026-11-10T00:00:00",
   "event_type": "team",
   "category": "Technology",
   "maximum_seats": 80,

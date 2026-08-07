@@ -35,28 +35,79 @@ export default function About() {
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="about-navbar sticky top-0 z-40 border-b border-white/[0.08]"
+        className="sticky top-0 z-40 glass py-4 shadow-sm"
       >
-        <div className="container relative flex h-16 items-center justify-between gap-4">
-          <Link to="/"><Logo /></Link>
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 md:flex">
-            <Link to="/" className="nav-item">Home</Link>
-            <Link to="/#events" className="nav-item">Events</Link>
-          </nav>
-          <motion.button
-            whileHover={{ scale: 1.08, rotate: 8 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={toggleTheme}
-            className="theme-icon-button btn-ghost ml-auto hidden h-10 w-10 place-items-center rounded-full md:grid"
-            aria-label="Toggle theme"
+        <div className="container flex items-center justify-between gap-4">
+
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 font-display font-black text-xl tracking-tight"
+            style={{ color: "var(--text-primary)" }}
           >
-            <motion.span key={theme} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} transition={{ duration: 0.25 }}>
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
-            </motion.span>
-          </motion.button>
-          <button className="btn-ghost grid h-9 w-9 place-items-center rounded-full md:hidden" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-            <Menu size={20} />
-          </button>
+            <Logo />
+          </Link>
+
+          {/* Center Navigation */}
+          <nav className="hidden items-center gap-1 md:flex">
+            <Link
+              to="/"
+              className="rounded-xl px-4 py-2 text-sm font-medium transition hover:opacity-80"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/about"
+              className="rounded-xl px-4 py-2 text-sm font-medium transition hover:opacity-80"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              About Us
+            </Link>
+
+            <a
+              href="/#faq"
+              className="rounded-xl px-4 py-2 text-sm font-medium transition hover:opacity-80"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              FAQ
+            </a>
+          </nav>
+
+          {/* Right Side */}
+          <div className="flex items-center gap-2">
+
+            <button
+              onClick={toggleTheme}
+              className="btn-ghost hidden h-9 w-9 place-items-center rounded-full md:grid"
+            >
+              <motion.div
+                key={theme}
+                initial={{ rotate: -30, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                {isDark ? <Moon size={16} /> : <Sun size={16} />}
+              </motion.div>
+            </button>
+
+            <Link
+              to="/login"
+              className="btn btn-primary hidden text-sm md:inline-flex"
+            >
+              Get Started <ArrowRight size={15} />
+            </Link>
+
+            <button
+              className="btn-ghost grid h-9 w-9 place-items-center rounded-full md:hidden"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+
+          </div>
+
         </div>
       </motion.header>
 

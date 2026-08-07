@@ -9,10 +9,9 @@ import {
 } from "react-icons/fa";
   
 const footerQuickLinks = [
-    { label: "Home", href: "#home" },
-    { label: "About Us", href: "#stats" },
-    { label: "Events", href: "#events" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Home", href: "/" },
+    { label: "About Us", href: "/about" },
+    { label: "FAQ", href: "/#faq" },
   ];
 
  

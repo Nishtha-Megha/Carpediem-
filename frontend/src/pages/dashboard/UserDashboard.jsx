@@ -61,10 +61,36 @@ const normalizePhone = (value) => {
 
 const formatEventDate = (value) => {
   if (!value) return "Not set";
+
+  if (value instanceof Date) {
+    return value.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   const rawValue = String(value);
-  const datePart = rawValue.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
-  const date = new Date(datePart ? `${datePart}T00:00:00` : rawValue);
-  if (Number.isNaN(date.getTime())) return rawValue;
+  if (!rawValue.trim()) return "Not set";
+
+  const normalized = rawValue.replace(" ", "T");
+  const date = new Date(normalized);
+
+  if (Number.isNaN(date.getTime())) {
+    const datePart = rawValue.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+    if (datePart) {
+      const fallbackDate = new Date(`${datePart}T00:00:00`);
+      if (!Number.isNaN(fallbackDate.getTime())) {
+        return fallbackDate.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+    }
+    return rawValue;
+  }
+
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -452,9 +478,9 @@ export default function UserDashboard() {
     try {
       const res = await api.post("/registrations", {
         event_id: regEvent.id,
-        registration_type: regEvent.event_type,
         enrollment_number: regForm.enrollment_number,
         branch: regForm.branch,
+        college_name: user?.college_name || "LJ University",
         location: regForm.location,
         team_name: regForm.team_name,
         looking_for_players: regForm.looking_for_players,
@@ -1031,8 +1057,8 @@ if (!/^\d{14}$/.test(enrollment)) {
                 {/* Quick Stats */}
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2">
                   {[
-                    { label: "Registered Sports", value: myRegistrations.filter(r => r.status === "registered").length, icon: CalendarDays, color: "from-indigo-500/10 to-transparent", border: "border-indigo-500/10", text: "text-indigo-400" },
-                    { label: "My Teams", value: myRegistrations.filter(r => r.registration_type === "team").length, icon: Users, color: "from-cyan-500/10 to-transparent", border: "border-cyan-500/10", text: "text-cyan-400" }
+                    { label: "Registered Sports", value: myRegistrations.filter(r => ["registered", "pending", "approved", "waitlisted"].includes(String(r.status || "").toLowerCase())).length, icon: CalendarDays, color: "from-indigo-500/10 to-transparent", border: "border-indigo-500/10", text: "text-indigo-400" },
+                    { label: "My Teams", value: myRegistrations.filter(r => String(r.registration_type || "").toLowerCase() === "team").length, icon: Users, color: "from-cyan-500/10 to-transparent", border: "border-cyan-500/10", text: "text-cyan-400" }
                   ].map(({ label, value, icon: Icon, color, border, text }, i) => (
                     <motion.div
                       key={label}

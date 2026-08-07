@@ -926,6 +926,7 @@ class RegistrationListCreateView(APIView):
 
         data = serializer.validated_data
         event = data["event"]
+        registration_type = data.get("registration_type") or event.event_type or "individual"
 
         # Registration is closed as soon as the configured deadline is reached.
         deadline = event.registration_deadline
@@ -1010,7 +1011,7 @@ class RegistrationListCreateView(APIView):
         registration = Registration(
             user=request.user,
             event=event,
-            registration_type=event.event_type,
+            registration_type=registration_type,
             looking_for_players=data.get("looking_for_players", False),
             waitlist_position=waitlist_pos,
             status="waitlisted" if is_waitlisted else "Pending",
