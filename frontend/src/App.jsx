@@ -7,6 +7,7 @@ import { useTheme } from "./hooks/useTheme";
 // ─── Lazy page imports ───────────────────────────────────────────────────────
 
 const Landing = lazy(() => import("./pages/Landing"));
+const About = lazy(() => import("./pages/About"));
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -58,6 +59,7 @@ function AppRoutes() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<About />} />
         <Route path="/login" element={
           <PublicOnly><LoginPage /></PublicOnly>
         } />

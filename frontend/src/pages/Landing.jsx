@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "../components/layout/Footer";
 import { Logo } from "../components/brand/Logo";
+import heroImage from "../assets/images/logo.png";
 import {
   ArrowRight,
   BookmarkPlus,
@@ -57,7 +58,7 @@ function StarRating({ rating }) {
 const NAV_ITEMS = [
   { label: "Home", href: "#" },
   { label: "Events", href: "#events" },
-  { label: "About", href: "#faq" }
+  { label: "About Us", href: "/about" }
 ];
 
 const STATS = [
@@ -272,7 +273,13 @@ export default function Landing() {
 
       {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
 
-      <section ref={heroRef} className="relative flex min-h-screen items-center overflow-hidden pt-24 pb-16">
+      <section ref={heroRef} className="   relative flex min-h-screen items-center overflow-hidden pt-24 pb-16">
+        <img
+          src={heroImage}
+          alt="LJ University Ahmedabad campus"
+          className="absolute inset-0 h-full w-full object-cover brightness-[0.62]"
+        />
+        <div className="absolute inset-0 bg-slate-950/35" aria-hidden="true" />
         {/* Ambient glow blobs */}
         <div className="hero-blobs">
 
@@ -318,7 +325,7 @@ export default function Landing() {
             rotate: [0, 2, 0],
           }}
           transition={{
-            duration: 6,
+            duration: 4,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -384,11 +391,22 @@ export default function Landing() {
               transition={{
                 duration: 1,
               }}
-              className="font-display text-6xl font-black leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl mt-12"
-              style={{ color: "var(--text-primary)" }}
+              className="hero-heading mt-12 font-display text-6xl font-black leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl"
+              style={{ color: "#ffffff" }}
             >
               The premium campus{" "}
-              <span className="text-gradient">event platform</span>{" "}
+              <span
+                className="hero-platform-gradient"
+                style={{
+                  backgroundImage: "linear-gradient(90deg, #5f99f7 0%, #8feced 48%, #e48af4 100%)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                event platform
+              </span>{" "}
               for LJ University.
             </motion.h1>
 
@@ -410,8 +428,8 @@ export default function Landing() {
                 duration: 0.8,
                 delay: 0.2,
               }}
-              className="mx-auto mt-7 max-w-2xl text-xl leading-8"
-              style={{ color: "var(--text-secondary)" }}
+              className="hero-subtitle mx-auto mt-7 max-w-2xl text-xl leading-8"
+              style={{ color: "rgba(255,255,255,0.9)" }}
             >
               Discover sports events, register your team, track match schedules,
               and verify attendance with QR codes — all in one beautiful platform.
