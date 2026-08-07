@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../auth";
@@ -34,6 +34,7 @@ const sectionTitles = {
 export default function AdminLayout({ admin = false }) {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -48,8 +49,14 @@ export default function AdminLayout({ admin = false }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSection, setActiveSection] = useState(admin ? "dashboard" : "events");
+  const [activeSection, setActiveSection] = useState(location.state?.activeSection ?? (admin ? "dashboard" : "events"));
   const [registrationFilterSportId, setRegistrationFilterSportId] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.activeSection) {
+      setActiveSection(location.state.activeSection);
+    }
+  }, [location.state?.activeSection]);
 
   const handleSidebarSectionChange = (section) => {
     setActiveSection(section);

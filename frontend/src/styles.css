@@ -557,8 +557,10 @@ linear-gradient(
   color: #ffffff !important;
 }
 
-[data-theme="dark"] .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.72) !important;
+[data-theme="dark"] 
+
+.search-input::placeholder {
+  color: var(--text-secondary) !important;
   opacity: 1;
 }
 

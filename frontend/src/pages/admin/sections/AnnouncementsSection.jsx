@@ -11,37 +11,52 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { api, getApiErrorMessage } from "../../../api";
+import { useTheme } from "../../../hooks/useTheme";
 
 export function AnnouncementsSection() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const { theme } = useTheme();
 
   // Predefined templates
   const templates = [
     {
       title: "Registration Closing Tomorrow",
-      message: "Warning: All registration forms for Carpedium Sports 2026 must be submitted by tomorrow at 23:59. No exceptions will be made.",
+      message:
+        "Warning: All registration forms for Carpedium Sports 2026 must be submitted by tomorrow at 23:59. No exceptions will be made.",
       icon: AlertTriangle,
-      color: "border-white/20 text-white/80 bg-white/5 hover:bg-white/10"
+      color:
+        theme === "dark"
+          ? "border-amber-500/30 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20"
+          : "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100"
     },
     {
       title: "Basketball Venue Changed",
       message: "Important Update: The Basketball matches originally scheduled for Court A have been moved to Court B (Main Sports Hall) due to maintenance.",
       icon: Info,
-      color: "border-cyan-500/20 text-cyan-400 bg-cyan-500/5 hover:bg-cyan-500/10"
+      color:
+        theme === "dark"
+          ? "border-cyan-500/30 text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20"
+          : "border-cyan-300 text-cyan-700 bg-cyan-50 hover:bg-cyan-100"
     },
     {
       title: "Cricket Slots Full",
       message: "Notice: Registration slots for Cricket Premier League are now 100% full. Stay tuned for team allocations.",
       icon: Calendar,
-      color: "border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10"
+      color:
+        theme === "dark"
+          ? "border-rose-500/30 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20"
+          : "border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
     },
     {
       title: "Opening Ceremony at 9 AM",
       message: "Welcome: The Carpedium Sports 2026 Opening Ceremony starts tomorrow morning at 09:00 AM at the LJ Main Ground. Attendance is expected.",
       icon: Clock,
-      color: "border-indigo-500/20 text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10"
+      color:
+        theme === "dark"
+          ? "border-indigo-500/30 text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20"
+          : "border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
     }
   ];
 

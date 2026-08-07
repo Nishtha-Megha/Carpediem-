@@ -41,7 +41,7 @@ export function SettingsSection({ user, settingsForm, setSettingsForm, passwordF
             </label>
             <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
               Profile Photo URL
-              <input className="input text-sm font-medium mt-1" value={settingsForm.profile_photo} onChange={(e) => field("profile_photo", e.target.value)} placeholder="https://…" />
+              <input className="input text-sm font-medium mt-1 placeholder:text-gray-600" value={settingsForm.profile_photo} onChange={(e) => field("profile_photo", e.target.value)} placeholder="https://…" />
             </label>
 
             <div className="flex items-center gap-4 rounded-2xl p-4 border border-white/[0.03] mt-2" style={{ background: "var(--bg-card)" }}>
@@ -66,36 +66,25 @@ export function SettingsSection({ user, settingsForm, setSettingsForm, passwordF
       {
         /* Security */
       }
-      <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm flex flex-col justify-between" style={{ background: "var(--bg-surface)" }}>
+      <div className="glass rounded-[1.5rem] p-6 border border-black dark:border-black shadow-sm flex flex-col justify-between" style={{ background: "var(--bg-surface)" }}>
         <div>
           <div className="mb-5 flex items-center gap-3">
-            <span className="p-2 rounded-xl bg-white/10 text-white/80 border border-white/20">
+            <span className="p-2 rounded-xl bg-blue/10 text-blue/80 border border-blue/20">
               <ShieldAlert size={18} />
             </span>
             <h3 className="text-lg font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>Security</h3>
           </div>
 
           <div className="grid gap-4 mt-2">
-            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl p-4 text-xs font-bold uppercase tracking-wider text-slate-400 border border-white/[0.03]" style={{ background: "var(--bg-card)" }}>
+            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl p-4 text-xs font-bold uppercase tracking-wider text-slate-400 border border-black" style={{ background: "var(--bg-card)" }}>
               <span>Two-factor Authentication</span>
               <input type="checkbox" className="h-4 w-4 accent-indigo-500 rounded" checked={settingsForm.two_factor_enabled} onChange={(e) => field("two_factor_enabled", e.target.checked)} />
-            </label>
-            <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-              Session Timeout (minutes)
-              <input className="input text-sm font-medium mt-1" type="number" min={5} value={settingsForm.session_timeout} onChange={(e) => field("session_timeout", Number(e.target.value))} />
             </label>
 
             <div className="grid gap-2 pt-2">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Change Password</p>
               <input className="input text-sm mt-1" type="password" placeholder="Current password" value={passwordForm.current_password} onChange={(e) => setPasswordForm((f) => ({ ...f, current_password: e.target.value }))} />
-              <input className="input text-sm mt-1.5" type="password" placeholder="New password" value={passwordForm.new_password} onChange={(e) => setPasswordForm((f) => ({ ...f, new_password: e.target.value }))} />
-            </div>
-
-            <div className="rounded-2xl p-4 border border-white/[0.03] mt-2" style={{ background: "var(--bg-card)" }}>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Login Activity Trace</p>
-              <div className="grid gap-1.5 text-xs font-semibold text-slate-500">
-                {(user?.login_history?.length ? user.login_history : ["No login history yet"]).map((entry, i) => <span key={i} className="font-mono">{entry}</span>)}
-              </div>
+              <input className="input text-sm mt-1.5 placeholder:text-gray-600" type="password" placeholder="New password" value={passwordForm.new_password} onChange={(e) => setPasswordForm((f) => ({ ...f, new_password: e.target.value }))} />
             </div>
           </div>
         </div>
