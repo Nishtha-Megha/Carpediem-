@@ -31,7 +31,7 @@ const sectionTitles = {
   settings: "Settings"
 };
 
-export default function AdminLayout({ admin = false }) {
+export default function AdminLayout({ admin = false, initialSection }) {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -48,7 +48,7 @@ export default function AdminLayout({ admin = false }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSection, setActiveSection] = useState(admin ? "dashboard" : "events");
+  const [activeSection, setActiveSection] = useState(initialSection ?? (admin ? "dashboard" : "events"));
   const [registrationFilterSportId, setRegistrationFilterSportId] = useState(null);
 
   const handleSidebarSectionChange = (section) => {

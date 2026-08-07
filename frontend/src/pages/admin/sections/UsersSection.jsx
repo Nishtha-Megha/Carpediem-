@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Search, Eye,  RefreshCw, Download, FileText } from "lucide-react";
+import { Search, Eye, Plus, RefreshCw, Download, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -10,6 +10,12 @@ import { Modal } from "../../../components/ui/Modal";
 
 export function UsersSection({ users, loading, onRefresh, onStudentUpdated, participants = [], events = [] }) {
   const [search, setSearch] = useState("");
+  const [addStudentOpen, setAddStudentOpen] = useState(false);
+  const [addSaving, setAddSaving] = useState(false);
+  const [addForm, setAddForm] = useState({
+    full_name: "", email: "", password: "", enrollment_number: "", phone: "",
+    gender: "", branch: "", semester: "", college_name: "", location: "", profile_photo: ""
+  });
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,6 +80,31 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
     setProfileModalOpen(true);
   };
 
+  const updateAddField = (field, value) => {
+    setAddForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleAddStudent = async (event) => {
+    event.preventDefault();
+    setAddSaving(true);
+    try {
+      await api.post("/admin/users", {
+        ...addForm,
+        role: "student",
+        semester: Number(addForm.semester),
+        is_active: true
+      });
+      toast.success("Student added successfully");
+      setAddStudentOpen(false);
+      setAddForm({ full_name: "", email: "", password: "", enrollment_number: "", phone: "", gender: "", branch: "", semester: "", college_name: "", location: "", profile_photo: "" });
+      await onRefresh();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
   const exportCSV = () => {
     const headers = ["Full Name", "Email", "Enrollment No", "Branch", "Semester", "Phone", "Gender", "Status"];
     const rows = filtered.map((u) => [
@@ -136,9 +167,14 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
           <h1 className="text-2xl font-black" style={{ color: "var(--text-primary)" }}>Students Management</h1>
           <p className="text-base text-slate-500 font-semibold mt-1">Review student profiles, active status, and access settings</p>
         </div>
-        <button className="btn btn-secondary text-base py-2 px-3 flex items-center gap-1.5 rounded-xl" onClick={onRefresh}>
-          <RefreshCw size={13} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-primary text-base py-2 px-3 flex items-center gap-1.5 rounded-xl" onClick={() => setAddStudentOpen(true)}>
+            <Plus size={14} /> Add Student
+          </button>
+          <button className="btn btn-secondary text-base py-2 px-3 flex items-center gap-1.5 rounded-xl" onClick={onRefresh}>
+            <RefreshCw size={13} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* ══ Search Panel ═════════════════════════════════════════════════ */}
@@ -213,6 +249,33 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
           </div>
         </div>
       )}
+
+      <Modal
+        open={addStudentOpen}
+        onClose={() => !addSaving && setAddStudentOpen(false)}
+        title="Add Student"
+        subtitle="Create a complete student account"
+        footer={<div className="flex gap-2">
+          <button className="btn-secondary text-sm px-4 py-2" onClick={() => setAddStudentOpen(false)} disabled={addSaving}>Cancel</button>
+          <button className="btn btn-primary text-sm px-4 py-2" type="submit" form="add-student-form" disabled={addSaving}>{addSaving ? "Adding..." : "Add Student"}</button>
+        </div>}
+      >
+        <form id="add-student-form" onSubmit={handleAddStudent} className="grid gap-4 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1">Full Name *<input className="input text-sm" placeholder="e.g. Alex Johnson" value={addForm.full_name} onChange={(e) => updateAddField("full_name", e.target.value)} required /></label>
+            <label className="grid gap-1">Email *<input className="input text-sm" type="email" placeholder="student@example.com" value={addForm.email} onChange={(e) => updateAddField("email", e.target.value)} required /></label>
+            <label className="grid gap-1">Password *<input className="input text-sm" type="password" placeholder="Minimum 8 characters" minLength={8} value={addForm.password} onChange={(e) => updateAddField("password", e.target.value)} required /></label>
+            <label className="grid gap-1">Enrollment Number *<input className="input text-sm" placeholder="14-digit enrollment number" inputMode="numeric" pattern="[0-9]{14}" maxLength={14} value={addForm.enrollment_number} onChange={(e) => updateAddField("enrollment_number", e.target.value)} required /></label>
+            <label className="grid gap-1">Phone Number *<input className="input text-sm" placeholder="10-digit mobile number" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} value={addForm.phone} onChange={(e) => updateAddField("phone", e.target.value)} required /></label>
+            <label className="grid gap-1">Gender *<select className="input text-sm" value={addForm.gender} onChange={(e) => updateAddField("gender", e.target.value)} required><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></label>
+            <label className="grid gap-1">Department / Branch *<input className="input text-sm" placeholder="e.g. Computer Science" value={addForm.branch} onChange={(e) => updateAddField("branch", e.target.value)} required /></label>
+            <label className="grid gap-1">Semester *<input className="input text-sm" type="number" min="1" value={addForm.semester} onChange={(e) => updateAddField("semester", e.target.value)} required /></label>
+            <label className="grid gap-1">College Name *<input className="input text-sm" placeholder="e.g. LJ University" value={addForm.college_name} onChange={(e) => updateAddField("college_name", e.target.value)} required /></label>
+            <label className="grid gap-1">Location *<input className="input text-sm" placeholder="e.g. Ahmedabad" value={addForm.location} onChange={(e) => updateAddField("location", e.target.value)} required /></label>
+          </div>
+          <label className="grid gap-1">Profile Photo URL *<input className="input text-sm" type="url" placeholder="https://example.com/photo.jpg" value={addForm.profile_photo} onChange={(e) => updateAddField("profile_photo", e.target.value)} required /></label>
+        </form>
+      </Modal>
 
       {/* ══ Student Profile Modal ══════════════════════════════════════════ */}
       <Modal
@@ -321,7 +384,7 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
               const studentTeams = studentRegs.filter(p => p.registration_type === "team");
 
               return (
-                <div className="space-y-6 text-sm text-slate-300 max-h-[75vh] overflow-y-auto pr-2">
+                <div className="student-profile-content space-y-6 text-sm text-slate-300 max-h-[75vh] overflow-y-auto pr-2">
                   {/* Photo + Basic info */}
                   <div className="flex items-center gap-5 pb-6 border-b border-white/10">
                     {selectedStudent.profile_photo ? (
@@ -337,7 +400,7 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
                     ) : null}
 
                   <div
-                    className="h-20 w-20 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-3xl font-bold text-white"
+                    className="profile-avatar h-20 w-20 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-3xl font-bold text-white"
                     style={selectedStudent.profile_photo ? { display: "none" } : undefined}
                   >
                     {(selectedStudent.full_name || "S").charAt(0).toUpperCase()}

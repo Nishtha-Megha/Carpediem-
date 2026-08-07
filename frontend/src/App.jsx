@@ -13,6 +13,7 @@ const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const UserDashboard = lazy(() => import("./pages/dashboard/UserDashboard"));
 const EventDetailsPage = lazy(() => import("./pages/events/EventDetailsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const EntryPage = lazy(() => import("./pages/entry/EntryPage"));
 
 // ─── Loading spinner ──────────────────────────────────────────────────────────
 
@@ -72,6 +73,11 @@ function AppRoutes() {
         {/* Admin panel — all sections rendered inside AdminLayout via activeSection state */}
         <Route path="/admin" element={
           <RequireAuth admin><AdminLayout admin /></RequireAuth>
+        } />
+        <Route path="/entry/:qrToken" element={<EntryPage />} />
+
+        <Route path="/admin/events" element={
+          <RequireAuth admin><AdminLayout admin initialSection="events" /></RequireAuth>
         } />
 
         {/* Event details — accessible to any authenticated staff */}

@@ -3,7 +3,9 @@ import axios from "axios";
 // ─── Axios Instance ──────────────────────────────────────────────────────────
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api",
+  // In local mobile testing, use the same machine hostname that served Vite.
+  // VITE_API_URL still takes precedence for deployed environments.
+  baseURL: import.meta.env.VITE_API_URL ?? `${window.location.protocol}//${window.location.hostname}:8000/api`,
   timeout: 15000,
 });
 

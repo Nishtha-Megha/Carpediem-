@@ -221,6 +221,9 @@ export function SportsSection({ events, setEvents, loading, onRefresh, canManage
                   <th className="py-4 px-6 font-bold uppercase tracking-wider">
                     Team Size
                   </th>
+                  <th className="py-4 px-6 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
                   
                   <th className="py-4 px-6 font-bold uppercase tracking-wider text-right">
                     Actions
@@ -249,6 +252,14 @@ export function SportsSection({ events, setEvents, loading, onRefresh, canManage
 
                     <td className="py-4 px-6 font-semibold">
                       {sport.team_size || 1}
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <span
+                        className={`badge ${sport.status === "ongoing" ? "badge-success" : sport.status === "completed" ? "badge-neutral" : "badge-info"}`}
+                      >
+                        {sport.status || "upcoming"}
+                      </span>
                     </td>
 
 
