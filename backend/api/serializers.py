@@ -1,4 +1,6 @@
 # pyrefly: ignore [missing-import]
+import uuid
+
 from rest_framework import serializers
 
 from .documents import Event, Registration, Team, User
@@ -63,7 +65,7 @@ class AdminUserSerializer(serializers.Serializer):
     department = serializers.CharField(required=False, allow_blank=True)
     college_name = serializers.CharField(required=False, allow_blank=True)
     location = serializers.CharField(required=False, allow_blank=True)
-    gender = serializers.ChoiceField(choices=("male", "female"), required=False)
+    gender = serializers.ChoiceField(choices=("male", "female", "other"), required=False)
     role = serializers.ChoiceField(choices=("student", "super_admin", "admin", "event_manager", "volunteer", "viewer"), required=False, default="student")
     profile_photo = serializers.CharField(required=False, allow_blank=True)
     is_active = serializers.BooleanField(required=False, default=True)
@@ -91,7 +93,7 @@ class EventSerializer(serializers.Serializer):
     date = serializers.CharField()
     time = serializers.CharField()
     venue = serializers.CharField()
-    registration_deadline = serializers.CharField(required=False, allow_blank=True)
+    registration_deadline = serializers.DateTimeField(required=False, allow_null=True)
     event_type = serializers.ChoiceField(choices=("individual", "team"))
     category = serializers.CharField(required=False, allow_blank=True)
     coordinator = serializers.CharField(required=False, allow_blank=True)
@@ -109,23 +111,24 @@ class EventSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         import datetime
+
+        def parse_date_value(value):
+            if not value:
+                return None
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                return value.date() if isinstance(value, datetime.datetime) else value
+            try:
+                return datetime.datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+            except ValueError:
+                return None
+
         date_str = attrs.get("date")
         deadline_str = attrs.get("registration_deadline")
-        
-        date_val = None
-        if date_str:
-            try:
-                date_val = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            except ValueError:
-                pass
-                
-        if deadline_str:
-            try:
-                deadline_val = datetime.datetime.strptime(deadline_str, "%Y-%m-%d").date()
-                if date_val and deadline_val > date_val:
-                    raise serializers.ValidationError({"registration_deadline": "Registration deadline must be before or on the event date."})
-            except ValueError:
-                pass
+
+        date_val = parse_date_value(date_str)
+        deadline_val = parse_date_value(deadline_str)
+        if date_val and deadline_val and deadline_val > date_val:
+            raise serializers.ValidationError({"registration_deadline": "Registration deadline must be before or on the event date."})
         return attrs
 
 
@@ -240,6 +243,9 @@ def event_to_dict(event):
 
 def registration_to_dict(registration):
     from mongoengine.errors import DoesNotExist
+    if not registration.qr_token:
+        registration.qr_token = uuid.uuid4().hex
+        registration.save()
     try:
         user_data = user_to_dict(registration.user) if registration.user else None
     except DoesNotExist:
@@ -269,6 +275,7 @@ def registration_to_dict(registration):
         "waitlist_position": registration.waitlist_position,
         "looking_for_players": registration.looking_for_players,
         "join_requests": registration.join_requests,
+        "qr_token": registration.qr_token,
 
         "created_at": registration.created_at.isoformat(),
     }

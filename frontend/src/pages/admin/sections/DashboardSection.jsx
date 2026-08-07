@@ -11,6 +11,26 @@ import { SkeletonPanel } from "../../../components/ui/SkeletonPanel";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { api, getApiErrorMessage } from "../../../api";
 
+function toDateTimeLocal(value) {
+  if (!value) return "";
+  const match = String(value).match(/^([A-Za-z]{3})\s+(\d{2}),\s+(\d{4})\s+\((\d{2}):(\d{2})\)$/);
+  const date = match
+    ? new Date(`${match[1]} ${match[2]}, ${match[3]} ${match[4]}:${match[5]}`)
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatBannerDeadline(value) {
+  if (!value || !String(value).includes("T")) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const pad = (part) => String(part).padStart(2, "0");
+  return `${month} ${pad(date.getDate())}, ${date.getFullYear()} (${pad(date.getHours())}:${pad(date.getMinutes())})`;
+}
+
 export function DashboardSection({
   analytics,
   analyticsLoading,
@@ -120,7 +140,7 @@ export function DashboardSection({
               <span>📍 LJ University Campus</span>
             </p>
             <p className="mt-1.5 text-xs text-rose-400 font-bold flex items-center gap-1.5">
-              <span>Registration Deadline: {banner.registration_deadline}</span>
+              <span>Registration Deadline: {formatBannerDeadline(banner.registration_deadline)}</span>
             </p>
             <p className="hidden">
               <span>⚠️ Registration Deadline: 15 Aug 2026</span>
@@ -140,7 +160,13 @@ export function DashboardSection({
             {[['title', 'Banner Title'], ['event_dates', 'Event Dates'], ['venue', 'Venue'], ['registration_deadline', 'Registration Deadline']].map(([key, label]) => (
               <label key={key} className="grid gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
                 {label}
-                <input className="input text-sm" value={banner[key]} onChange={(event) => setBanner((current) => ({ ...current, [key]: event.target.value }))} />
+                <input
+                  className="input text-sm"
+                  type={key === "registration_deadline" ? "datetime-local" : "text"}
+                  step={key === "registration_deadline" ? "60" : undefined}
+                  value={key === "registration_deadline" ? toDateTimeLocal(banner[key]) : banner[key]}
+                  onChange={(event) => setBanner((current) => ({ ...current, [key]: event.target.value }))}
+                />
               </label>
             ))}
             <div className="md:col-span-2 flex justify-end">

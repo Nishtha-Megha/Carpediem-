@@ -118,9 +118,7 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
         : "",
 
       registration_deadline: event?.registration_deadline
-        ? new Date(event.registration_deadline)
-          .toISOString()
-          .split("T")[0]
+        ? toDateTimeLocal(event.registration_deadline)
         : "",
 
       time: convertTo24Hour(event?.time || ""),
@@ -128,6 +126,13 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
 
       banner_image: event?.banner_image || "",
     });
+  }
+
+  function toDateTimeLocal(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (part) => String(part).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
   function updateField(key, val) {
     setForm((f) => f ? { ...f, [key]: val } : f);
@@ -173,6 +178,7 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
     try {
       const { time_period, ...eventData } = form;
       eventData.time = toMeridiemTime(form.time, time_period);
+      eventData.registration_deadline = eventData.registration_deadline || null;
       if (mode === "create") {
         await api.post("/events", eventData);
         toast.success("Event created");
@@ -247,21 +253,10 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
       /* Filters */
     }
     <div className="glass grid gap-3 rounded-[1.5rem] p-4 md:grid-cols-2 lg:grid-cols-4 border border-white/[0.03] dark:border-white/[0.05] shadow-sm">
-      <input
-        className="search-input input text-sm rounded-xl border-2
-                  focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20"
-        style={{
-          color: "var(--text-primary)",
-          background: "var(--bg-card)",
-          bborder: "1px solid #1f2937",
-        }}
-        placeholder="Search events..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
+      <input className="search-input input text-sm" placeholder="Search events..." value={search} onChange={(e) => {
+        setSearch(e.target.value);
+        setPage(1);
+      }} />
       <select className="input text-sm" value={catFilter} onChange={(e) => {
         setCatFilter(e.target.value);
         setPage(1);
@@ -510,8 +505,10 @@ export function EventsSection({ events, loading, onRefresh, canManage }) {
           <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Registration Deadline</label>
           <input
             className="input text-sm font-medium mt-0.5"
-            type="date"
+            type="datetime-local"
+            step="60"
             value={form.registration_deadline ?? ""}
+            max={form.date ? `${form.date}T23:59` : undefined}
             onChange={(e) =>
               updateField("registration_deadline", e.target.value)
             }

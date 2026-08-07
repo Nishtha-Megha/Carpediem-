@@ -235,7 +235,7 @@ export default function EventDetailsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-5" style={{ borderColor: "var(--border-subtle)" }}>
           <button
             className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 rounded-xl"
-            onClick={() => navigate("/admin", { state: { activeSection: "events" } })}
+            onClick={() => navigate("/admin")}
           >
             <ArrowLeft size={14} /> Back to Events
           </button>
@@ -336,7 +336,7 @@ export default function EventDetailsPage() {
                   <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><Users size={16} /></span>
                   <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Type</p>
-                    <p className="mt-0.5 font-bold text-xs text-white truncate capitalize text-left">
+                    <p className="mt-0.5 font-bold text-xs text-slate-400 truncate capitalize text-left">
                       {event.event_type === "team" ? `Team (${event.team_size} Players)` : "Individual"}
                     </p>
                   </div>
@@ -368,12 +368,12 @@ export default function EventDetailsPage() {
           {/* About Event & Coordinator Row */}
           <section className="grid gap-5 lg:grid-cols-[1.5fr_0.5fr]">
             <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md">
-              <h2 className="text-lg font-extrabold tracking-tight text-black mb-3">About Event</h2>
+              <h2 className="text-base font-extrabold tracking-tight text-white mb-3">About Event</h2>
               <p className="text-sm leading-relaxed text-slate-300">{event.description}</p>
             </div>
 
             <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm bg-slate-950/20 backdrop-blur-md">
-              <h2 className="text-lg font-extrabold tracking-tight text-black mb-3">Coordinator</h2>
+              <h2 className="text-base font-extrabold tracking-tight text-white mb-3">Coordinator</h2>
               <div className="flex items-center gap-3.5">
                 <span className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20"><User size={18} /></span>
                 <div className="min-w-0">
@@ -575,7 +575,7 @@ export default function EventDetailsPage() {
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Status</label>
+            <label className="text-md font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Status</label>
             <select
               className="input text-sm font-medium mt-0.5"
               value={editForm.status ?? "upcoming"}

@@ -30,7 +30,8 @@ import {
   UserPlus,
   HelpCircle,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  QrCode
 } from "lucide-react";
 import { useAuth } from "../../auth";
 import { api, getApiErrorMessage } from "../../api";
@@ -145,6 +146,7 @@ export default function UserDashboard() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteTargetReg, setInviteTargetReg] = useState(null);
   const [inviteTargetEnrollment, setInviteTargetEnrollment] = useState("");
+  const [qrRegistration, setQrRegistration] = useState(null);
 
   const [profileForm, setProfileForm] = useState({
     full_name: "",
@@ -1325,6 +1327,7 @@ if (!/^\d{14}$/.test(enrollment)) {
 
                       const activeMemberCount = 1 + (reg.team_members?.filter(m => m.invite_status !== "rejected").length || 0);
                       const isTeamFull = activeMemberCount >= maxTeamSize;
+                      const canShowQr = !!reg.qr_token && (isTeam ? isTeamFull : true) && reg.status !== "waitlisted" && !["cancelled", "rejected"].includes(String(reg.status).toLowerCase());
 
                       return (
                         <motion.article
@@ -1472,6 +1475,11 @@ if (!/^\d{14}$/.test(enrollment)) {
 
                           {/* Action Buttons */}
                           <div className="mt-6 flex gap-3 pt-3 border-t border-white/[0.02]">
+                            {canShowQr && (
+                              <button className="btn btn-secondary text-xs py-2 px-4 rounded-xl font-bold flex items-center justify-center gap-1.5" onClick={() => setQrRegistration(reg)}>
+                                <QrCode size={14} /> Entry QR
+                              </button>
+                            )}
                             {isCaptain && isTeam && (
                               <button
                                 className="btn btn-primary text-xs py-2 px-4 rounded-xl font-bold flex-1 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1569,6 +1577,19 @@ if (!/^\d{14}$/.test(enrollment)) {
           </>
         )}
       </main>
+
+      <Modal open={!!qrRegistration} onClose={() => setQrRegistration(null)} title="Entry QR Code" subtitle={qrRegistration?.registration_type === "team" ? qrRegistration?.team_name : "Individual Entry"} maxWidth="max-w-md">
+        {qrRegistration && (
+          <div className="text-center">
+            <p className="text-sm text-slate-400 mb-5">Show this code at the entry desk. It contains the complete participant roster.</p>
+            <div className="mx-auto w-fit rounded-2xl bg-white p-4 shadow-xl">
+              <img className="h-64 w-64" alt="Registration entry QR code" src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=12&data=${encodeURIComponent(`${(import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, "")}/entry/${qrRegistration.qr_token}`)}`} />
+            </div>
+            <p className="mt-5 text-xs font-semibold text-slate-500">{qrRegistration.event?.name}</p>
+            <p className="mt-1 text-[10px] text-slate-600">QR code is valid for this registered entry only.</p>
+          </div>
+        )}
+      </Modal>
 
       {/* ══ DETAILS / VIEW EVENT MODAL ═════════════════════════════════════ */}
       {/* ══ DETAILS / VIEW EVENT MODAL ═════════════════════════════════════ */}
