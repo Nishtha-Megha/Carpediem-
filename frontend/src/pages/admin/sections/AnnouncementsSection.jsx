@@ -23,7 +23,7 @@ export function AnnouncementsSection() {
       title: "Registration Closing Tomorrow",
       message: "Warning: All registration forms for Carpedium Sports 2026 must be submitted by tomorrow at 23:59. No exceptions will be made.",
       icon: AlertTriangle,
-      color: "border-amber-500/20 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10"
+      color: "border-white/20 text-white/80 bg-white/5 hover:bg-white/10"
     },
     {
       title: "Basketball Venue Changed",

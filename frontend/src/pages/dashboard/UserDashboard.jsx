@@ -919,12 +919,12 @@ if (!/^\d{14}$/.test(enrollment)) {
 
         {!error && !isProfileComplete && (
           <motion.div
-            className="rounded-3xl border border-amber-500/20 bg-amber-500/5 p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+            className="rounded-3xl border border-white/20 bg-white/5 p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3.5">
-              <span className="p-3 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="p-3 rounded-2xl bg-white/10 text-white/80 border border-white/20">
                 <User size={24} />
               </span>
               <div>
@@ -935,7 +935,7 @@ if (!/^\d{14}$/.test(enrollment)) {
               </div>
             </div>
             <button
-              className="btn btn-primary bg-amber-500 hover:bg-amber-600 text-white text-xs py-2.5 px-5 font-bold shadow-md rounded-xl shrink-0"
+              className="btn btn-primary bg-white/10 hover:bg-white/15 text-white text-xs py-2.5 px-5 font-bold shadow-md rounded-xl shrink-0"
               onClick={handleOpenProfileModal}
             >
               Complete Profile
@@ -1237,11 +1237,11 @@ if (!/^\d{14}$/.test(enrollment)) {
                               {isRegistered ? (
                                 <span className="badge badge-success text-xs font-bold py-2 rounded-xl flex items-center justify-center">✓ Registered</span>
                               ) : hasScheduleConflict ? (
-                                <span className="badge text-amber-400 bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold py-2 rounded-xl flex items-center justify-center text-center">
+                                <span className="badge text-white/80 bg-white/10 border border-white/20 text-[10px] font-bold py-2 rounded-xl flex items-center justify-center text-center">
                                   Schedule Conflict
                                 </span>
                               ) : isFull ? (
-                                <button className="btn-secondary text-sm py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold text-amber-400 bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10" onClick={() => openRegister(event)}>
+                                <button className="btn-secondary text-sm py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl font-bold text-white/80 bg-white/10 border border-white/20 hover:bg-white/15" onClick={() => openRegister(event)}>
                                   Join Waitlist
                                 </button>
                               ) : (
@@ -1344,8 +1344,8 @@ if (!/^\d{14}$/.test(enrollment)) {
                           <div>
                             {/* Invitation Banner inside the team card */}
                             {isPendingInvite && (
-                              <div className="rounded-2xl p-4 bg-amber-500/10 border border-amber-500/25 mb-4 text-xs">
-                                <p className="font-bold text-amber-400">Team Invitation Received</p>
+                              <div className="rounded-2xl p-4 bg-white/10 border border-white/25 mb-4 text-xs">
+                                <p className="font-bold text-white/80">Team Invitation Received</p>
                                 <p className="text-slate-300 mt-1">You have been invited to join this team. Do you want to accept?</p>
                                 <div className="flex gap-2 mt-3 justify-end">
                                   <button className="btn-primary py-1 px-3 rounded-lg text-[10px] font-bold" onClick={() => handleRespondInvite(reg.id, "accepted")}>
@@ -1422,13 +1422,13 @@ if (!/^\d{14}$/.test(enrollment)) {
                                   {reg.team_members?.map((member, idx) => (
                                     <div key={idx} className="flex items-center justify-between text-xs">
                                       <div className="flex items-center gap-2">
-                                        <span className={member.invite_status === "accepted" ? "text-emerald-400" : member.invite_status === "rejected" ? "text-rose-400" : "text-amber-500"}>
-                                          {member.invite_status === "accepted" ? "✔" : member.invite_status === "rejected" ? "❌" : "⚠️"}
+                                        <span className={member.invite_status === "accepted" ? "text-emerald-400" : member.invite_status === "rejected" ? "text-rose-400" : "text-white/80"}>
+                                          {member.invite_status === "accepted" ? "✔" : member.invite_status === "rejected" ? "❌" : "⚪"}
                                         </span>
                                         <span className="font-semibold text-slate-300">{member.name}</span>
                                         <span className="text-[10px] font-mono text-slate-500">({member.enrollment_number})</span>
                                       </div>
-                                      <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${member.invite_status === "accepted" ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/25" : member.invite_status === "rejected" ? "text-rose-400 bg-rose-500/10 border border-rose-500/25" : "text-amber-400 bg-amber-500/10 border border-amber-500/25"}`}>
+                                      <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${member.invite_status === "accepted" ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/25" : member.invite_status === "rejected" ? "text-rose-400 bg-rose-500/10 border border-rose-500/25" : "text-white/80 bg-white/10 border border-white/25"}`}>
                                         {member.invite_status}
                                       </span>
                                     </div>

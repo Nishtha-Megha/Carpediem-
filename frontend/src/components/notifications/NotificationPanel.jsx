@@ -5,7 +5,7 @@ import { EmptyState } from "../ui/EmptyState";
 const categoryColors = {
   registration: "bg-indigo-500/20 text-indigo-300",
   payment: "bg-green-500/20 text-green-300",
-  certificate: "bg-yellow-500/20 text-yellow-300",
+  certificate: "bg-white/10 text-white/80",
   event: "bg-cyan-500/20 text-cyan-300",
   system: "bg-slate-500/20 text-slate-300"
 };

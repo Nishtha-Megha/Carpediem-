@@ -106,11 +106,11 @@ export default function SignupPage() {
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <Link to="/" className="mb-10 block text-xl font-black tracking-tight transition hover:opacity-80 text-gradient">
-        Carpedium
+      <Link to="/" className="mb-10 flex items-center gap-3 text-xl font-black tracking-tight transition hover:opacity-80">
+        <span className="brand-logo text-xl sm:text-2xl">CARPEDIEM</span>
       </Link>
 
-      <h1 className="text-4xl font-black tracking-tight text-gradient">
+      <h1 className="text-4xl font-black tracking-tight text-white">
         Create account
       </h1>
       <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>

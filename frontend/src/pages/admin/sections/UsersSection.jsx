@@ -442,7 +442,7 @@ export function UsersSection({ users, loading, onRefresh, onStudentUpdated, part
                                 className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
                                   reg.status === "registered"
                                     ? "bg-emerald-500/15 text-emerald-400"
-                                    : "bg-yellow-500/15 text-yellow-400"
+                                    : "bg-white/15 text-white/80"
                                 }`}
                               >
                                 {reg.status}

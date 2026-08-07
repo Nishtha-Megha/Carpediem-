@@ -12,7 +12,7 @@ const typeBg = {
   event: "bg-indigo-500/20 text-indigo-300",
   user: "bg-cyan-500/20 text-cyan-300",
   participant: "bg-green-500/20 text-green-300",
-  report: "bg-yellow-500/20 text-yellow-300"
+  report: "bg-white/10 text-white/80"
 };
 function Highlight({ text, query }) {
   if (!query.trim()) return <>{text}</>;

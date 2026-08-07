@@ -200,6 +200,23 @@ linear-gradient(
   background-clip: text;
 }
 
+.brand-logo {
+  font-family: 'Outfit', ui-sans-serif, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1.05;
+  font-size: 1.05em;
+  transform: scale(1.05) scaleY(1.08);
+  display: inline-block;
+  -webkit-text-stroke: 0.7px rgba(56, 189, 248, 0.85);
+  text-shadow:
+    0 0 4px rgba(56, 189, 248, 0.35),
+    0 0 12px rgba(59, 130, 246, 0.2),
+    0 0 24px rgba(14, 165, 233, 0.12);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    ADMIN DASHBOARD TYPOGRAPHY
 ══════════════════════════════════════════════════════════════════════════════ */

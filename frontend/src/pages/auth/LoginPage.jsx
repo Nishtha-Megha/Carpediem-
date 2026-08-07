@@ -121,12 +121,12 @@ export default function LoginPage() {
   }
         <Link
     to="/"
-    className="mb-10 block text-xl font-black tracking-tight transition hover:opacity-80 text-gradient"
+    className="mb-10 flex items-center gap-3 text-xl font-black tracking-tight transition hover:opacity-80"
   >
-          Carpedium
+          <span className="brand-logo text-xl sm:text-2xl">CARPEDIEM</span>
         </Link>
 
-        <h1 className="text-4xl font-black tracking-tight text-gradient">
+        <h1 className="text-4xl font-black tracking-tight text-white">
           Welcome back
         </h1>
         <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>

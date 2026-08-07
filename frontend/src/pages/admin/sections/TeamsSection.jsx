@@ -208,8 +208,8 @@ export function TeamsSection({ participants, loading, onRefresh, canManage, user
                     <td className="py-4 px-6 font-semibold">{team.event?.name}</td>
                     <td className="py-4 px-6 font-semibold">{team.user?.full_name}</td>
                     <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${team.status === "registered" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-yellow-500/10 border border-yellow-500/20 text-yellow-400"}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${team.status === "registered" ? "bg-emerald-400" : "bg-yellow-400"}`} />
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${team.status === "registered" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-white/10 border border-white/20 text-white/80"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${team.status === "registered" ? "bg-emerald-400" : "bg-white/80"}`} />
                         {team.status === "registered" ? "Registered" : "Waitlisted"}
                       </span>
                     </td>
@@ -278,7 +278,7 @@ export function TeamsSection({ participants, loading, onRefresh, canManage, user
               <div>
                 <p className="font-bold text-slate-500 uppercase tracking-wider text-[9px]">Team Status</p>
                 <p className="text-sm font-bold mt-1 text-slate-100 flex items-center gap-1">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${selectedTeam.status === "registered" ? "bg-emerald-500/10 text-emerald-400" : "bg-yellow-500/10 text-yellow-400"}`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${selectedTeam.status === "registered" ? "bg-emerald-500/10 text-emerald-400" : "bg-white/10 text-white/80 border border-white/20"}`}>
                     {selectedTeam.status === "registered" ? "Registered" : "Waitlisted"}
                   </span>
                 </p>

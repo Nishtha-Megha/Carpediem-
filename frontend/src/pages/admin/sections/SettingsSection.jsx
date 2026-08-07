@@ -69,7 +69,7 @@ export function SettingsSection({ user, settingsForm, setSettingsForm, passwordF
       <div className="glass rounded-[1.5rem] p-6 border border-white/[0.03] dark:border-white/[0.05] shadow-sm flex flex-col justify-between" style={{ background: "var(--bg-surface)" }}>
         <div>
           <div className="mb-5 flex items-center gap-3">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="p-2 rounded-xl bg-white/10 text-white/80 border border-white/20">
               <ShieldAlert size={18} />
             </span>
             <h3 className="text-lg font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>Security</h3>

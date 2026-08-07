@@ -37,7 +37,7 @@ class User(Document):
     last_login = DateTimeField(db_field="lastLogin")
     two_factor_enabled = BooleanField(db_field="twoFactorEnabled", default=False)
     session_timeout = IntField(db_field="sessionTimeout", default=30, min_value=5)
-    login_history = ListField(StringField(), db_field="loginHistory")
+    login_history = ListField(DateTimeField(), db_field="loginHistory")
     theme = StringField(default="dark")
     language = StringField(default="English")
     timezone = StringField(default="Asia/Kolkata")

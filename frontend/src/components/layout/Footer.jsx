@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ChevronRight, MapPin, Mail, Phone } from "lucide-react";
-
 import {
   FaFacebookF,
   FaTwitter,
@@ -42,10 +41,10 @@ export function Footer() {
           <div className="flex flex-col items-start">
             <Link
               to="/"
-              className="font-extrabold text-2xl tracking-wider text-white uppercase hover:opacity-90 transition-opacity mb-3 inline-block"
+              className="inline-flex items-center gap-3 font-extrabold text-2xl tracking-wider uppercase hover:opacity-90 transition-opacity mb-3"
               style={{ fontFamily: "'Outfit', 'Inter', sans-serif" }}
             >
-              CARPEDIEM
+              <span className="brand-logo text-2xl">CARPEDIEM</span>
             </Link>
 
             <p className="text-gray-300 text-sm leading-relaxed max-w-sm">{footerDescription}</p>

@@ -75,7 +75,7 @@ const HOW_IT_WORKS = [
 
 
 const FAQ_ITEMS = [
-  { id: "f1", question: "Who can use Carpedium?", answer: "Carpedium is built for LJ University. Students use the platform to discover and register for events, while staff (admins, event managers, volunteers) manage everything from the admin panel." },
+  { id: "f1", question: "Who can use Carpediem?", answer: "Carpediem is built for LJ University. Students use the platform to discover and register for events, while staff (admins, event managers, volunteers) manage everything from the admin panel." },
   { id: "f2", question: "Can we manage multiple events simultaneously?", answer: "Absolutely. You can create, publish, and manage unlimited events in parallel. Each event has independent settings, seats, and scheduling." },
   { id: "f3", question: "How does team registration work?", answer: "Event managers set the team size and maximum teams. Students register as a captain and add member details (name, email, enrollment, branch) during the flow." },
   { id: "f5", question: "What roles are available for staff?", answer: "Super Admin, Admin, Event Manager, Volunteer, and Viewer — each with fine-grained permissions managed through our role system." },
@@ -193,11 +193,8 @@ export default function Landing() {
       >
         <div className="container flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 font-display font-black text-xl tracking-tight" style={{ color: "var(--text-primary)" }}>
-            <div className="gradient-primary grid h-8 w-8 place-items-center rounded-xl">
-              <Sparkles size={16} className="text-white" />
-            </div>
-            Carpedium
+          <Link to="/" className="flex items-center gap-3 font-display text-xl tracking-tight" style={{ color: "var(--text-primary)" }}>
+            <span className="brand-logo text-xl sm:text-xl">CARPEDIEM</span>
           </Link>
 
           {/* Desktop nav */}
@@ -253,7 +250,9 @@ export default function Landing() {
               transition={{ type: "spring", stiffness: 380, damping: 40 }}
             >
               <div className="mb-8 flex items-center justify-between">
-                <span className="font-display font-black text-xl" style={{ color: "var(--text-primary)" }}>Carpedium</span>
+                <div className="flex items-center gap-3">
+                  <span className="brand-logo text-xl">CARPEDIEM</span>
+                </div>
                 <button className="btn-ghost p-2" onClick={() => setMobileMenuOpen(false)}><X size={20} /></button>
               </div>
               <nav className="flex flex-col gap-2">
@@ -504,7 +503,7 @@ export default function Landing() {
               Frequently Asked Questions
             </h2>
             <p className="max-w-xl mx-auto text-sm" style={{ color: "var(--text-muted)" }}>
-              Everything you need to know about the LJ Carpedium campus sports & event platform.
+              Everything you need to know about the LJ Carpediem campus sports & event platform.
             </p>
           </ScrollReveal>
 

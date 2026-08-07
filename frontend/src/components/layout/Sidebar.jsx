@@ -33,11 +33,8 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
     /* Brand / Logo */
   }
         <div className={`mb-8 flex items-center px-2 pt-2 ${collapsed ? "justify-center" : "justify-between"}`}>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-500 to-green-500 font-black text-white shadow-lg shadow-green-500/20">
-              C
-            </div>
-            {!collapsed && <span className="text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent dark:from-white dark:via-slate-100 dark:to-slate-400">Carpedium</span>}
+          <div className="flex items-center gap-3">
+            <span className="brand-logo text-lg">CARPEDIEM</span>
           </div>
           <button
     className="lg:hidden grid h-8 w-8 place-items-center rounded-full transition hover:bg-white/10 active:scale-95"
