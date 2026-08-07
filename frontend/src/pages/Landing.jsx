@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Footer } from "../components/layout/Footer";
+import { Logo } from "../components/brand/Logo";
 import {
   ArrowRight,
   BookmarkPlus,
@@ -193,8 +194,8 @@ export default function Landing() {
       >
         <div className="container flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 font-display text-xl tracking-tight" style={{ color: "var(--text-primary)" }}>
-            <span className="brand-logo text-xl sm:text-xl">CARPEDIEM</span>
+          <Link to="/" className="flex items-center gap-2.5 font-display font-black text-xl tracking-tight" style={{ color: "var(--text-primary)" }}>
+            <Logo />
           </Link>
 
           {/* Desktop nav */}

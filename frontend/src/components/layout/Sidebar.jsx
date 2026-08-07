@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { RoleBadge } from "../ui/Badge";
 import { canAccess } from "../../types";
+import { Logo } from "../brand/Logo";
 export const adminNavItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, permission: "dashboard.view" },
   { id: "events", label: "Events", icon: CalendarDays, permission: "events.view" },
@@ -33,9 +34,7 @@ export function Sidebar({ user, activeSection, onSection, onLogout, open, onClos
     /* Brand / Logo */
   }
         <div className={`mb-8 flex items-center px-2 pt-2 ${collapsed ? "justify-center" : "justify-between"}`}>
-          <div className="flex items-center gap-3">
-            <span className="brand-logo text-lg">CARPEDIEM</span>
-          </div>
+          <Logo compact={collapsed} />
           <button
     className="lg:hidden grid h-8 w-8 place-items-center rounded-full transition hover:bg-white/10 active:scale-95"
     style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Logo } from "../../components/brand/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CalendarDays,
@@ -713,14 +714,7 @@ if (!/^\d{14}$/.test(enrollment)) {
         <div className="mx-auto max-w-7xl px-5 h-16 flex items-center justify-between relative">
           <div className="flex items-center gap-8">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-500 font-black text-white text-sm shadow-md">
-                C
-              </div>
-              <span className="text-md font-extrabold tracking-tight hidden sm:block" style={{ color: "var(--text-primary)" }}>
-                Carpedium
-              </span>
-            </div>
+            <Logo className="text-[var(--text-primary)]" />
             {/* Nav Tabs */}
             <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 items-center justify-between gap-1">
               {[

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Carpedium logo</title>
+  <desc id="desc">A dark C over a lime, mint, and cyan gradient diamond.</desc>
+  <defs>
+    <linearGradient id="diamond" x1="25%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#efff91" />
+      <stop offset="50%" stop-color="#a9f4c5" />
+      <stop offset="100%" stop-color="#35c9f4" />
+    </linearGradient>
+    <linearGradient id="letter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#101b20" />
+      <stop offset="100%" stop-color="#071116" />
+    </linearGradient>
+  </defs>
+  <path fill="url(#diamond)" d="M128 8 248 128 128 248 8 128Z" />
+  <path fill="url(#letter)" d="M190 65c-13-7-28-10-45-10-48 0-78 28-78 73s30 73 78 73c17 0 32-3 45-10l-3-28c-10 5-21 7-33 7-25 0-40-15-40-42s15-42 40-42c12 0 23 2 33 7z" />
+</svg>

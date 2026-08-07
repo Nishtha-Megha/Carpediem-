@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../auth";
 import { getApiErrorMessage } from "../../api";
 import { ThemeSwitcher } from "../../components/theme/ThemeSwitcher";
+import { Logo } from "../../components/brand/Logo";
 function passwordStrength(pw) {
   let score = 0;
   if (pw.length >= 8) score++;
@@ -106,9 +107,7 @@ export default function SignupPage() {
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <Link to="/" className="mb-10 flex items-center gap-3 text-xl font-black tracking-tight transition hover:opacity-80">
-        <span className="brand-logo text-xl sm:text-2xl">CARPEDIEM</span>
-      </Link>
+      <Link to="/" className="mb-10 flex items-center justify-center transition hover:opacity-80"><Logo /></Link>
 
       <h1 className="text-4xl font-black tracking-tight text-white">
         Create account

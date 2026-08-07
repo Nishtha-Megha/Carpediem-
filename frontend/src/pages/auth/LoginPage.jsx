@@ -8,6 +8,7 @@ import { useAuth } from "../../auth";
 import { getApiErrorMessage } from "../../api";
 import { ThemeSwitcher } from "../../components/theme/ThemeSwitcher";
 import { staffRoles } from "../../types";
+import { Logo } from "../../components/brand/Logo";
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -119,12 +120,7 @@ export default function LoginPage() {
         {
     /* Logo */
   }
-        <Link
-    to="/"
-    className="mb-10 flex items-center gap-3 text-xl font-black tracking-tight transition hover:opacity-80"
-  >
-          <span className="brand-logo text-xl sm:text-2xl">CARPEDIEM</span>
-        </Link>
+        <Link to="/" className="mb-10 flex items-center justify-center transition hover:opacity-80"><Logo /></Link>
 
         <h1 className="text-4xl font-black tracking-tight text-white">
           Welcome back
