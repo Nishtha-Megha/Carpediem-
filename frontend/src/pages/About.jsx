@@ -156,7 +156,6 @@ export default function About() {
             <div className="mx-auto mb-16 max-w-2xl text-center">
               <p className="animate-heading section-kicker">Campus in motion</p>
               <h2 className="animate-subtitle mt-3 font-display text-4xl font-black sm:text-6xl" style={{ color: "var(--text-primary)" }}>Built around the love of sport.</h2>
-              <p className="animate-description mt-5 leading-7" style={{ color: "var(--text-secondary)" }}>These image tiles are ready to be replaced with your final LJ sports photographs.</p>
             </div>
             <div className="about-diamond-grid" aria-label="LJ University sports photo gallery">
               {sportsPhotos.map((photo, index) => (
