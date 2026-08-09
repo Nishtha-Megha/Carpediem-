@@ -1,4 +1,4 @@
-# Carpedium
+# Carpediem
 
 Premium College Event Management System built with React, Vite, Tailwind CSS, Django REST Framework, JWT, and MongoDB.
 
