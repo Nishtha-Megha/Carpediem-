@@ -3,6 +3,7 @@ services:
     name: carpediem-api
     runtime: python
     rootDir: backend
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn carpedium.wsgi:application
     healthCheckPath: /api/events
