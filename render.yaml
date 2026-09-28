@@ -18,8 +18,8 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: https://carpediem-web.onrender.com
 
-staticSites:
-  - name: carpediem-web
+  - type: static_site
+    name: carpediem-web
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
